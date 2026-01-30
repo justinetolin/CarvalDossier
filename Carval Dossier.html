@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Carval Dossier</title>
     <link
+        href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Inter:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -673,6 +676,338 @@
             accent-color: var(--accent-blue);
             cursor: pointer;
         }
+
+        /* PROFILE DOCUMENT STYLES */
+        /* Common Profile Vars */
+        .paper-profile-container {
+            --paper-bg: #f4f4f2;
+            --ink-black: #1a1a1a;
+            --alert-crimson: #800000;
+            --alert-purple: #4b0082;
+            --alert-red: #cc0000;
+            --alert-orange: #d35400;
+            --alert-green: #004d00;
+            --alert-blue: #003366;
+            --redacted-bg: #000;
+        }
+
+        .profile-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 200;
+            /* Higher than modals */
+            display: none;
+            justify-content: center;
+            align-items: flex-start;
+            /* Changed from center to allow top scrolling */
+            overflow-y: auto;
+            perspective: 1500px;
+            /* For 3D curl effect */
+            padding-top: 5rem;
+            /* More space at top */
+            padding-bottom: 5rem;
+        }
+
+        /* The Paper Document */
+        .paper-doc {
+            width: 816px;
+            max-width: 95vw;
+            min-height: 1056px;
+            /* A4 Ratioish */
+            background-color: var(--paper-bg, #f4f4f2);
+            color: var(--ink-black, #1a1a1a);
+            padding: 50px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+            position: relative;
+            transform-origin: 50% 150%;
+            margin: auto;
+            /* Centers in flex container */
+            /* Pivot from bottom */
+            animation: paperEnter 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            font-family: 'Courier Prime', monospace;
+            /* Texture Overlay */
+        }
+
+        .paper-doc::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png');
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        @keyframes paperEnter {
+            0% {
+                opacity: 0;
+                transform: translateY(120%) rotateX(-20deg) scale(0.9);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0) rotateX(0deg) scale(1);
+            }
+        }
+
+        .close-profile-btn {
+            position: fixed;
+            /* Move beside the paper (816px / 2 = 408 + gap) */
+            left: 50%;
+            margin-left: 440px;
+            top: 3rem;
+            /* Aligned with top area */
+            background: var(--alert-crimson, #800000);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            font-weight: bold;
+            z-index: 210;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+        }
+
+        .close-profile-btn:hover {
+            background: #ff0000;
+        }
+
+        /* Responsive adjustments for button */
+        @media (max-width: 1400px) {
+            .close-profile-btn {
+                position: fixed;
+                left: auto;
+                right: 2rem;
+                top: 6rem;
+                /* Below speaker icon */
+                margin-left: 0;
+            }
+        }
+
+        /* Profile Internal Typography (Scoped to .paper-doc) */
+        .paper-doc .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 4px solid #1a1a1a;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .paper-doc .agency-logo {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-size: 24px;
+            letter-spacing: -1px;
+            color: #1a1a1a;
+        }
+
+        .paper-doc .classification {
+            color: white;
+            padding: 5px 15px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 14px;
+            transform: rotate(-2deg);
+        }
+
+        .paper-doc .top-meta {
+            display: grid;
+            grid-template-columns: 180px 1fr 150px;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        /* Make responsive for smaller screens */
+        @media (max-width: 900px) {
+            .paper-doc .top-meta {
+                grid-template-columns: 1fr;
+            }
+
+            .paper-doc .mugshot {
+                margin: 0 auto;
+            }
+
+            .paper-doc .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .paper-doc .mugshot {
+            width: 180px;
+            height: 180px;
+            background-color: #ccc;
+            border: 2px solid #1a1a1a;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            filter: grayscale(1) contrast(1.2);
+            mix-blend-mode: multiply;
+            opacity: 0.9;
+        }
+
+        .paper-doc .identity-info table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .paper-doc .identity-info td {
+            padding: 4px 0;
+            font-size: 13px;
+            color: #1a1a1a;
+        }
+
+        .paper-doc .label {
+            font-weight: 700;
+            text-transform: uppercase;
+            width: 150px;
+        }
+
+        .paper-doc .value {
+            border-bottom: 1px dotted #1a1a1a;
+        }
+
+        .paper-doc .section-title {
+            background-color: #1a1a1a;
+            color: white;
+            padding: 4px 10px;
+            font-weight: 700;
+            font-size: 16px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            display: inline-block;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .paper-doc .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .paper-doc .text-block {
+            font-size: 13px;
+            line-height: 1.5;
+            text-align: justify;
+            color: #1a1a1a;
+        }
+
+        .paper-doc .alibi-box {
+            border: 2px solid #1a1a1a;
+            padding: 15px;
+            margin-top: 10px;
+            position: relative;
+        }
+
+        .paper-doc .alibi-box::before {
+            content: "OFFICIAL STATEMENT";
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background: #f4f4f2;
+            padding: 0 5px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .paper-doc .footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-top: 1px solid #1a1a1a;
+            padding-top: 20px;
+        }
+
+        .paper-doc .stamp-circle {
+            width: 80px;
+            height: 80px;
+            border: 2px solid;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 700;
+            transform: rotate(15deg);
+        }
+
+        .paper-doc .redacted {
+            background-color: #000;
+            color: #000;
+            cursor: help;
+            transition: color 0.3s;
+        }
+
+        .paper-doc .redacted:hover {
+            color: white;
+        }
+
+        /* Specific Colors applied via JS or classes */
+        .paper-doc.ramon .classification {
+            background-color: var(--alert-red);
+        }
+
+        .paper-doc.ramon .stamp-circle {
+            color: var(--alert-red);
+            border-color: var(--alert-red);
+        }
+
+        .paper-doc.diego .classification {
+            background-color: var(--alert-crimson);
+        }
+
+        .paper-doc.diego .stamp-circle {
+            color: var(--alert-crimson);
+            border-color: var(--alert-crimson);
+        }
+
+        .paper-doc.teresa .classification {
+            background-color: var(--alert-orange);
+        }
+
+        .paper-doc.teresa .stamp-circle {
+            color: var(--alert-orange);
+            border-color: var(--alert-orange);
+        }
+
+        .paper-doc.liza .classification {
+            background-color: var(--alert-purple);
+        }
+
+        .paper-doc.liza .stamp-circle {
+            color: var(--alert-purple);
+            border-color: var(--alert-purple);
+        }
+
+        .paper-doc.miguel .classification {
+            background-color: var(--alert-green);
+        }
+
+        .paper-doc.miguel .stamp-circle {
+            color: var(--alert-green);
+            border-color: var(--alert-green);
+        }
+
+        .paper-doc.driver .classification {
+            background-color: var(--alert-blue);
+        }
+
+        .paper-doc.driver .stamp-circle {
+            color: var(--alert-blue);
+            border-color: var(--alert-blue);
+        }
     </style>
 </head>
 
@@ -779,6 +1114,15 @@
                     <p><strong>Audio:</strong> Protocols</p>
                     <p><em>Game created for the Carval Dossier project.</em></p>
                 </div>
+            </div>
+        </div>
+
+        <!-- PROFILE VIEWER OVERLAY -->
+        <div class="profile-overlay paper-profile-container" id="profile-viewer"
+            onclick="if(event.target===this) closeProfile()">
+            <button class="close-profile-btn" onclick="closeProfile()">CLOSE DOSSIER</button>
+            <div id="paper-content-area">
+                <!-- Injected via JS -->
             </div>
         </div>
 
@@ -969,6 +1313,13 @@
                         this.bgm.pause();
                     }
                 }, duration / steps);
+            }
+
+            playFlip() {
+                if (this.muted) return;
+                const aud = new Audio('https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/audio_flip.mp3');
+                aud.volume = 0.5;
+                aud.play().catch(e => { });
             }
         }
 
@@ -1172,7 +1523,7 @@
 
                     <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 4px; margin-top: 2rem;">
                         <h3 style="margin-bottom: 1rem; font-family: var(--font-mono); color: var(--accent-blue);">Assign Initial Suspicion</h3>
-                        <p style="font-size: 0.85rem; margin-bottom: 1rem; color: #94a3b8;">Set your "gut priors". Must sum to 100%. Max 50% per suspect.</p>
+                        <p style="font-size: 0.85rem; margin-bottom: 1rem; color: #94a3b8;">Set your "gut priors" according to the information you have on the sidebar. Click on them to view their profile. Must sum to 100%. Max 50% per suspect.</p>
                         <div id="sliders-container"></div>
                         <div id="slider-total" style="text-align: right; font-family: var(--font-mono); margin-top: 1rem;">Total: 100%</div>
                         <button class="btn" id="start-btn" onclick="openInstructions()"
@@ -1595,6 +1946,12 @@
                 // 2. SOLVE / TEXT
             } else if (qData.type === 'solve' || qData.type === 'solve_dynamic') {
                 val = parseFloat(card.querySelector('#num-input').value);
+
+                // Branching fix for solve_dynamic (Q10 Miguel branch)
+                if (qData.type === 'solve_dynamic') {
+                    // For Q10 Miguel branch, simple check
+                    if (Math.abs(val - qData.answer) < 0.01) isCorrect = true;
+                }
 
                 // Special Case: Q7 (Phase 6) requires 4 decimals
                 if (currentPhase === 6) precision = 4;
@@ -2201,31 +2558,357 @@
 
         function stopTimer() { clearInterval(timerInterval); }
 
-        // --- MODALS ---
+        // --- PROFILE TEMPLATES ---
+        const profileHtmls = {
+            'diego': `
+        <div class="paper-doc diego">
+            <div class="header">
+                <div class="agency-logo">NICA // SPECIAL_DIV<div style="font-size: 10px; font-weight: 400; letter-spacing: 2px;">NATIONAL INTELLIGENCE COORDINATING AGENCY</div></div>
+                <div class="classification">TOP SECRET: POLITICAL</div>
+            </div>
+            <div style="text-align: right; font-size: 12px; margin-bottom: 20px;">
+                CASE REF: <span class="value">BENGUET-2025-CARVAL-002</span><br>
+                OFFICER: <span class="value">SR. INV. MARIA L. GUTIERREZ</span>
+            </div>
+            <div class="top-meta">
+                <div class="mugshot" style="background-image: url('https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/Profile_Diego%20Santos.png');"></div>
+                <div class="identity-info">
+                    <table>
+                        <tr><td class="label">FULL NAME</td><td class="value">SPEAKER DIEGO AVELINO SANTOS</td></tr>
+                        <tr><td class="label">AGENCY / OFFICE</td><td class="value">HOUSE OF REPRESENTATIVES</td></tr>
+                        <tr><td class="label">DESIGNATION</td><td class="value">SPEAKER OF THE HOUSE</td></tr>
+                        <tr><td class="label">YEARS IN SERVICE</td><td class="value">34 YEARS (FORMER PROV. REP)</td></tr>
+                        <tr><td class="label">POLITICAL LINEAGE</td><td class="value">SON OF FMR. SENATOR / NATIONWIDE NETWORK</td></tr>
+                        <tr><td class="label">DISTINGUISHING</td><td class="value">MOLE (LEFT CHEEK), HOUSE EMBLEM PIN</td></tr>
+                    </table>
+                </div>
+                <div style="text-align: center;"><div class="stamp-circle">HIGH<br>PROFILE</div></div>
+            </div>
+            <div class="grid-2">
+                <div>
+                    <div class="section-title">BEHAVIORAL PROFILE</div>
+                    <div class="text-block">
+                        Publicly charismatic and commanding. Privately highly controlling and prone to defensive posturing. Uses staff to control narratives. Dislikes disorder that threatens alliances.
+                        <br><br><strong>Vices:</strong> Maintains expensive lifestyle. Rumored to call in favors to protect allies.
+                        <br><br><strong>Motive:</strong> Dossier includes <strong><span class="redacted">Donor Links</span></strong> that would damage his political base. He stands to lose influence if implicated.
+                    </div>
+                </div>
+                <div>
+                    <div class="section-title">PSYCHOLOGICAL ASSESSMENT</div>
+                    <div class="text-block">
+                        <strong>Primary Stressor:</strong> Fear of political downfall, loss of patron networks, and exposure of donor entanglements.
+                        <br><br><strong>Relationship to Victim:</strong> Long-time ally turned estranged partner on ethics matters.
+                    </div>
+                </div>
+            </div>
+            <div class="section-title">ALIBI & FORMAL STATEMENT</div>
+            <div class="alibi-box text-block">"I remained on the ground floor until about 00:55 attending to a few calls and then retired to my room. I did not leave the premises after arriving."</div>
+            <div style="margin-top: 15px;" class="text-block">
+                <strong>INTELLIGENCE REBUTTAL:</strong> Phone logs show gap between <strong><span class="redacted">00:12 – 00:24 AM</span></strong>. Subject claims "poor signal" during a walk. A neighbor reported a silhouette near the perimeter around 00:35.<br><br>
+                <strong>GLITCH:</strong> Ten-minute gap in phone activity coincides with critical timeline. No staff corroboration for midnight movements.
+            </div>
+            <div class="footer">
+                <div><div style="font-size: 10px; font-weight: 700;">SUBJECT STATUS:</div><div style="color: var(--alert-crimson); font-weight: 900; font-size: 18px;">POLITICAL SENSITIVITY: EXTREME</div></div>
+                <div style="font-size: 10px; font-style: italic;">Signed: <span style="font-family: 'Inter', sans-serif; font-weight: 700; border-bottom: 1px solid #000;">Inv. M. Gutierrez</span></div>
+            </div>
+        </div>`,
+
+            'liza': `
+        <div class="paper-doc liza">
+            <div class="header">
+                <div class="agency-logo">NICA // SENATE_DIV<div style="font-size: 10px; font-weight: 400; letter-spacing: 2px;">NATIONAL INTELLIGENCE COORDINATING AGENCY</div></div>
+                <div class="classification">EYES ONLY: LEGISLATIVE</div>
+            </div>
+            <div style="text-align: right; font-size: 12px; margin-bottom: 20px;">
+                CASE REF: <span class="value">BENGUET-2025-CARVAL-004</span><br>
+                OFFICER: <span class="value">SR. INV. DANIEL P. AQUINO</span>
+            </div>
+            <div class="top-meta">
+                <div class="mugshot" style="background-image: url('https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/Profile_Liza%20Mendoza.png');"></div>
+                <div class="identity-info">
+                    <table>
+                        <tr><td class="label">FULL NAME</td><td class="value">SEN. LIZA GOMEZ MENDOZA</td></tr>
+                        <tr><td class="label">AGENCY / OFFICE</td><td class="value">SENATE OF THE PHILIPPINES</td></tr>
+                        <tr><td class="label">DESIGNATION</td><td class="value">SENATOR (COMMITTEE ON PUBLIC WORKS)</td></tr>
+                        <tr><td class="label">YEARS IN SERVICE</td><td class="value">26 YEARS (FORMER BUREAU CHIEF)</td></tr>
+                        <tr><td class="label">POLITICAL LINEAGE</td><td class="value">GOMEZ CLAN / BUREAUCRATIC DYNASTY</td></tr>
+                        <tr><td class="label">DISTINGUISHING</td><td class="value">INK STAIN (RIGHT INDEX), EMBOSSED FOLDER</td></tr>
+                    </table>
+                </div>
+                <div style="text-align: center;"><div class="stamp-circle">PRIORITY<br>WATCH</div></div>
+            </div>
+            <div class="grid-2">
+                <div>
+                    <div class="section-title">BEHAVIORAL PROFILE</div>
+                    <div class="text-block">
+                        Publicly intellectual and measured. Privately prone to anxiety when surprised and bureaucratically fastidious. Likely to attempt damage control reflexively when frightened.
+                        <br><br><strong>Vices:</strong> Protects reputation fiercely. Habitually destroys potentially embarrassing materials when under stress.
+                        <br><br><strong>Motive:</strong> Dossier ties Senate actions to <strong><span class="redacted">Irregular Approvals</span></strong>. Threat to committee probes.
+                    </div>
+                </div>
+                <div>
+                    <div class="section-title">PSYCHOLOGICAL ASSESSMENT</div>
+                    <div class="text-block">
+                        <strong>Primary Stressor:</strong> Legacy concerns and fear of public disgrace. Worries about being tied to systemic abuses late in career.
+                        <br><br><strong>Relationship to Victim:</strong> Once mentor and confidante; soured when victim refused to omit senate-related items.
+                    </div>
+                </div>
+            </div>
+            <div class="section-title">ALIBI & FORMAL STATEMENT</div>
+            <div class="alibi-box text-block">"I reviewed documents with Ms. Carval until 23:40, then returned to the library and retired to my room. I found a loose sheet earlier which I disposed of in my room out of panic. I did not leave the premises."</div>
+            <div style="margin-top: 15px;" class="text-block">
+                <strong>INTELLIGENCE REBUTTAL:</strong> Mezzanine camera confirms presence with victim at 23:40. Motion sensor registers brief movement near staircase at ~00:28.<br><br>
+                <strong>GLITCH:</strong> <span class="redacted">Partially burned fragments</span> recovered from trash bin in subject's room. Subject admits to panic-destruction of evidence, but denies homicide.
+            </div>
+            <div class="footer">
+                <div><div style="font-size: 10px; font-weight: 700;">SUBJECT STATUS:</div><div style="color: var(--alert-purple); font-weight: 900; font-size: 18px;">EVIDENCE TAMPERING SUSPECTED</div></div>
+                <div style="font-size: 10px; font-style: italic;">Signed: <span style="font-family: 'Inter', sans-serif; font-weight: 700; border-bottom: 1px solid #000;">Inv. D. Aquino</span></div>
+            </div>
+        </div>`,
+
+            'ramon': `
+        <div class="paper-doc ramon">
+            <div class="header">
+                <div class="agency-logo">NICA // FIELD_UNIT<div style="font-size: 10px; font-weight: 400; letter-spacing: 2px;">NATIONAL INTELLIGENCE COORDINATING AGENCY</div></div>
+                <div class="classification">FOR EYES ONLY</div>
+            </div>
+            <div style="text-align: right; font-size: 12px; margin-bottom: 20px;">
+                CASE REF: <span class="value">BENGUET-2025-CARVAL-001</span><br>
+                OFFICER: <span class="value">INV. RAFAEL M. SANTOS</span>
+            </div>
+            <div class="top-meta">
+                <div class="mugshot" style="background-image: url('https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/Profile_Ramon%20Alvarado.jpeg');"></div>
+                <div class="identity-info">
+                    <table>
+                        <tr><td class="label">FULL NAME</td><td class="value">USEC. RAMON DE LA CRUZ ALVARADO</td></tr>
+                        <tr><td class="label">AGENCY / OFFICE</td><td class="value">DPWH - FLOOD CONTROL & RIVER BASIN MGT</td></tr>
+                        <tr><td class="label">DESIGNATION</td><td class="value">UNDERSECRETARY (CAREER EXECUTIVE)</td></tr>
+                        <tr><td class="label">YEARS IN SERVICE</td><td class="value">28 YEARS (SENIOR TECHNOCRAT)</td></tr>
+                        <tr><td class="label">POLITICAL TIES</td><td class="value">MATERNAL UNCLE: EX-GOV REGION II</td></tr>
+                        <tr><td class="label">DISTINGUISHING</td><td class="value">SCAR (LEFT FOREARM), BLACK MPT WATCH</td></tr>
+                    </table>
+                </div>
+                <div style="text-align: center;"><div class="stamp-circle">UNDER<br>AUDIT</div></div>
+            </div>
+            <div class="grid-2">
+                <div>
+                    <div class="section-title">BEHAVIORAL PROFILE</div>
+                    <div class="text-block">
+                        Publicly known as "The Bureaucrat Who Knows the Ropes." Methodical and safety-first. Privately, subject is quietly anxious about sudden accountability and prone to rigid defensiveness when his procedures are questioned.
+                        <br><br><strong>Vices:</strong> Private golfer. Conservative investments. Enjoys expensive cigars in closed circles.
+                        <br><br><strong>Motive:</strong> Dossier contains memos regarding <strong><span class="redacted">Anomalous Flood Control Disbursements</span></strong> signed by him.
+                    </div>
+                </div>
+                <div>
+                    <div class="section-title">PSYCHOLOGICAL ASSESSMENT</div>
+                    <div class="text-block">
+                        <strong>Primary Stressor:</strong> Fear of career destruction and loss of pension. Extremely sensitive to public scandal due to family's local prominence.
+                        <br><br><strong>Relationship to Victim:</strong> Former colleague turned rival. Victim challenged some of his approvals publicly.
+                    </div>
+                </div>
+            </div>
+            <div class="section-title">ALIBI & FORMAL STATEMENT</div>
+            <div class="alibi-box text-block">"I arrived at 15:20. After the meeting, I retired to my assigned guest room to prepare for an early briefing. I rested and did not leave my room aside from a brief instance to take medication."</div>
+            <div style="margin-top: 15px;" class="text-block">
+                <strong>INTELLIGENCE REBUTTAL:</strong> GateCam confirms arrival. However, motion sensors registered movement near G2 at <span class="redacted">00:12 AM</span>. Subject claims this was him "adjusting bedding." No independent witness confirms.<br><br>
+                <strong>GLITCH:</strong> Room motion sensor data contradicts "restful sleep" narrative.
+            </div>
+            <div class="footer">
+                <div><div style="font-size: 10px; font-weight: 700;">SUBJECT STATUS:</div><div style="color: var(--alert-red); font-weight: 900; font-size: 18px;">PERSON OF INTEREST</div></div>
+                <div style="font-size: 10px; font-style: italic;">Signed: <span style="font-family: 'Inter', sans-serif; font-weight: 700; border-bottom: 1px solid #000;">Inv. R. Santos</span></div>
+            </div>
+        </div>`,
+
+            'teresa': `
+        <div class="paper-doc teresa">
+            <div class="header">
+                <div class="agency-logo">NICA // HOUSE_DIV<div style="font-size: 10px; font-weight: 400; letter-spacing: 2px;">NATIONAL INTELLIGENCE COORDINATING AGENCY</div></div>
+                <div class="classification">RESTRICTED: INFRA</div>
+            </div>
+            <div style="text-align: right; font-size: 12px; margin-bottom: 20px;">
+                CASE REF: <span class="value">BENGUET-2025-CARVAL-003</span><br>
+                OFFICER: <span class="value">INV. AMIHAN P. REYES</span>
+            </div>
+            <div class="top-meta">
+                <div class="mugshot" style="background-image: url('https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/Profile_Teresa%20Valdez.jpeg');"></div>
+                <div class="identity-info">
+                    <table>
+                        <tr><td class="label">FULL NAME</td><td class="value">CONG. TERESA SEGUNDO VALDEZ</td></tr>
+                        <tr><td class="label">AGENCY / OFFICE</td><td class="value">HOUSE INFRASTRUCTURE COMMITTEE</td></tr>
+                        <tr><td class="label">DESIGNATION</td><td class="value">DISTRICT REPRESENTATIVE / CHAIR</td></tr>
+                        <tr><td class="label">YEARS IN SERVICE</td><td class="value">18 YEARS (ROSE FROM LEGAL AIDE)</td></tr>
+                        <tr><td class="label">POLITICAL LINEAGE</td><td class="value">PATRONAGE TIES TO PROVINCIAL MAYORS</td></tr>
+                        <tr><td class="label">DISTINGUISHING</td><td class="value">GOLD LOCKET, INK STAINS (FINGERTIPS)</td></tr>
+                    </table>
+                </div>
+                <div style="text-align: center;"><div class="stamp-circle">ACTIVE<br>INTEL</div></div>
+            </div>
+            <div class="grid-2">
+                <div>
+                    <div class="section-title">BEHAVIORAL PROFILE</div>
+                    <div class="text-block">
+                        Publicly polished and empathetic. Privately calculated; prioritizes political survival and mitigation. Will prefer negotiated containment over large confrontation.
+                        <br><br><strong>Vices:</strong> Reputation-conscious. Privately maintains close ties with contractors for political mobilization.
+                        <br><br><strong>Motive:</strong> Exposure of approvals advantaging <strong><span class="redacted">District Contractors</span></strong> would ruin re-election.
+                    </div>
+                </div>
+                <div>
+                    <div class="section-title">PSYCHOLOGICAL ASSESSMENT</div>
+                    <div class="text-block">
+                        <strong>Primary Stressor:</strong> Fear of being cut off from project funds and losing political capital in a tight re-election race.
+                        <br><br><strong>Relationship to Victim:</strong> Public supporter with private pressure. Strained professional relationship due to transparency demands.
+                    </div>
+                </div>
+            </div>
+            <div class="section-title">ALIBI & FORMAL STATEMENT</div>
+            <div class="alibi-box text-block">"I felt unwell and went to my room. I briefly stepped onto the balcony at 00:50 to take a work call, then returned and slept. I did not leave the house."</div>
+            <div style="margin-top: 15px;" class="text-block">
+                <strong>INTELLIGENCE REBUTTAL:</strong> Phone records verify call at 00:50. Balcony light logs corroborate usage.<br><br>
+                <strong>GLITCH:</strong> <span class="redacted">Torn cuff fragment</span> with faint blood smear found in back garden. Subject claims accidental snag during earlier walk, but timing is imprecise.
+            </div>
+            <div class="footer">
+                <div><div style="font-size: 10px; font-weight: 700;">SUBJECT STATUS:</div><div style="color: var(--alert-orange); font-weight: 900; font-size: 18px;">FORENSIC MATCH PENDING</div></div>
+                <div style="font-size: 10px; font-style: italic;">Signed: <span style="font-family: 'Inter', sans-serif; font-weight: 700; border-bottom: 1px solid #000;">Inv. A. Reyes</span></div>
+            </div>
+        </div>`,
+
+            'miguel': `
+        <div class="paper-doc miguel">
+            <div class="header">
+                <div class="agency-logo">NICA // OVP_LEGAL<div style="font-size: 10px; font-weight: 400; letter-spacing: 2px;">NATIONAL INTELLIGENCE COORDINATING AGENCY</div></div>
+                <div class="classification">HIGH PRIORITY: LEGAL</div>
+            </div>
+            <div style="text-align: right; font-size: 12px; margin-bottom: 20px;">
+                CASE REF: <span class="value">BENGUET-2025-CARVAL-005</span><br>
+                OFFICER: <span class="value">LEAD INV. ANGELA R. DELA CRUZ</span>
+            </div>
+            <div class="top-meta">
+                <div class="mugshot" style="background-image: url('https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/Profile_Miguel%20Reyes.png');"></div>
+                <div class="identity-info">
+                    <table>
+                        <tr><td class="label">FULL NAME</td><td class="value">ATTY. MIGUEL ANTONIO S. REYES</td></tr>
+                        <tr><td class="label">AGENCY / OFFICE</td><td class="value">OFFICE OF THE VICE PRESIDENT</td></tr>
+                        <tr><td class="label">DESIGNATION</td><td class="value">SENIOR LEGAL COUNSEL / CONSULTANT</td></tr>
+                        <tr><td class="label">YEARS IN SERVICE</td><td class="value">15 YEARS (PRIVATE & GOV. PRACTICE)</td></tr>
+                        <tr><td class="label">POLITICAL LINEAGE</td><td class="value">EXECUTIVE LEGAL NETWORK (NO DYNASTY)</td></tr>
+                        <tr><td class="label">DISTINGUISHING</td><td class="value">SCAR (THUMB), LEATHER LEGAL PAD</td></tr>
+                    </table>
+                </div>
+                <div style="text-align: center;"><div class="stamp-circle">SUSPECT<br>ALPHA</div></div>
+            </div>
+            <div class="grid-2">
+                <div>
+                    <div class="section-title">BEHAVIORAL PROFILE</div>
+                    <div class="text-block">
+                        The "fixer" who reads law for leverage. Analytical but anxious when reputation is threatened. Capable of quick rationale under pressure.
+                        <br><br><strong>Vices:</strong> High-quality tastes (tailored suits). Prefers influence and legal maneuvering to brute force. Known for handling sensitive cases quietly.
+                        <br><br><strong>Motive:</strong> Dossier implicates clients. Stands to lose <strong><span class="redacted">Lucrative Counsel Roles</span></strong> if drafts are released.
+                    </div>
+                </div>
+                <div>
+                    <div class="section-title">PSYCHOLOGICAL ASSESSMENT</div>
+                    <div class="text-block">
+                        <strong>Primary Stressor:</strong> Reputation risk and pressure from clients to suppress damaging documents.
+                        <br><br><strong>Relationship to Victim:</strong> Trusted legal consultant. Uniquely positioned to assess, copy, or suppress evidence.
+                    </div>
+                </div>
+            </div>
+            <div class="section-title">ALIBI & FORMAL STATEMENT</div>
+            <div class="alibi-box text-block">"I helped clear documents and retired to my room around 00:30. I was in the kitchen clearing glasses around 00:05 and returned to my room. I had no reason to approach the safe."</div>
+            <div style="margin-top: 15px;" class="text-block">
+                <strong>INTELLIGENCE REBUTTAL:</strong> PorchCam confirms kitchen presence at ~00:05. <span class="redacted">Ambiguous movement</span> on study camera during blackout window (00:20-00:23).<br><br>
+                <strong>GLITCH:</strong> Digits "2-7-6" circled on legal pad match napkin found in kitchen. Small napkin has faint <span class="redacted">hemoglobin traces</span>.
+            </div>
+            <div class="footer">
+                <div><div style="font-size: 10px; font-weight: 700;">SUBJECT STATUS:</div><div style="color: var(--alert-green); font-weight: 900; font-size: 18px;">FORENSIC MATCH CONFIRMED</div></div>
+                <div style="font-size: 10px; font-style: italic;">Signed: <span style="font-family: 'Inter', sans-serif; font-weight: 700; border-bottom: 1px solid #000;">Inv. A. Dela Cruz</span></div>
+            </div>
+        </div>`,
+
+            'driver': `
+        <div class="paper-doc driver">
+            <div class="header">
+                <div class="agency-logo">NICA // WITNESS_DIV<div style="font-size: 10px; font-weight: 400; letter-spacing: 2px;">NATIONAL INTELLIGENCE COORDINATING AGENCY</div></div>
+                <div class="classification">RESTRICTED: WITNESS PROTECTION</div>
+            </div>
+            <div style="text-align: right; font-size: 12px; margin-bottom: 20px;">
+                CASE REF: <span class="value">BENGUET-2025-CARVAL-006</span><br>
+                OFFICER: <span class="value">LIAISON C. NAVARRO</span>
+            </div>
+            <div class="top-meta">
+                <div class="mugshot" style="background-image: url('https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/Profile_Driver%20Jose%20Delos.jpeg');"></div>
+                <div class="identity-info">
+                    <table>
+                        <tr><td class="label">FULL NAME</td><td class="value">JOSE "JOEY" MARIANO DELOS</td></tr>
+                        <tr><td class="label">ROLE</td><td class="value">PERSONAL DRIVER / HOUSEHOLD AIDE</td></tr>
+                        <tr><td class="label">EMPLOYER</td><td class="value">MS. CASSANDRA CARVAL (DEC.)</td></tr>
+                        <tr><td class="label">YEARS IN SERVICE</td><td class="value">12 YEARS</td></tr>
+                        <tr><td class="label">BACKGROUND</td><td class="value">VOCATIONAL LOGISTICS / NO POLITICAL TIES</td></tr>
+                        <tr><td class="label">PHYSICAL</td><td class="value">5'6" / STOCKY / CALLUSED HANDS</td></tr>
+                    </table>
+                </div>
+                <div style="text-align: center;"><div class="stamp-circle">CLEARED<br>FOR NOW</div></div>
+            </div>
+            <div class="grid-2">
+                <div>
+                    <div class="section-title">BEHAVIORAL PROFILE</div>
+                    <div class="text-block">
+                        Subject is described by colleagues as "quiet and dependable." Displays deep loyalty to the victim. Psychological assessment indicates he is reflective and literate beyond his station, often using literature to ground his moral compass.
+                        <br><br><strong>Vices:</strong> None observed. Spends spare time maintaining family ties and attending parish services.
+                        <br><br><strong>Stressors:</strong> Fear for his employer's safety (prior to incident) and now fear of public entanglement.
+                    </div>
+                </div>
+                <div>
+                    <div class="section-title">CRITICAL EVIDENCE</div>
+                    <div class="text-block">
+                        <strong>Possessions:</strong> A worn paperback novel found in his locker: <em><span class="redacted">Sense and Sensibility</span></em>.
+                        <br><br><strong>Marks:</strong> Small coffee stain habitually found on left index finger.
+                        <br><br><strong>Motive Analysis:</strong> <span style="color: var(--alert-blue); font-weight: bold;">NEGATIVE.</span> No evidence of personal gain. Subject's role is purely custodial and witnessing.
+                    </div>
+                </div>
+            </div>
+            <div class="section-title">TIMELINE & ALIBI</div>
+            <div class="alibi-box text-block">"I drove everyone up in the afternoon, parked in the garage at 15:10. I put my keys on the kitchen counter. I slept in the driver’s quarters and did not enter the main house. I checked on the house at 06:15 and found Ma’am on the floor at 06:22."</div>
+            <div style="margin-top: 15px;" class="text-block">
+                <strong>VERIFICATION:</strong> GateCam confirms vehicle parked at 15:10. Driver’s quarters motion log quiet overnight.<br><br>
+                <strong>THE GLITCH (ANOMALY):</strong> Subject mentions the victim quoting <strong><span class="redacted">Jane Austen</span></strong> regarding "balancing reason and feeling" weeks prior. He reflected on how this related to corrupt officials. This literary connection seems unusually specific for a driver, suggesting a deeper intellectual bond with the victim.
+            </div>
+            <div class="footer">
+                <div><div style="font-size: 10px; font-weight: 700;">STATUS:</div><div style="color: var(--alert-blue); font-weight: 900; font-size: 18px;">COOPERATIVE WITNESS</div></div>
+                <div style="font-size: 10px; font-style: italic;">Signed: <span style="font-family: 'Inter', sans-serif; font-weight: 700; border-bottom: 1px solid #000;">Inv. Navarro</span></div>
+            </div>
+        </div>`
+        };
+
         function openSuspectModal(id) {
-            const s = suspects.find(x => x.id === id);
-            if (!s) return;
-            document.getElementById('detail-name').innerText = s.name;
-            document.getElementById('detail-name').style.color = s.color;
-            document.getElementById('detail-role').innerText = s.role;
-            document.getElementById('detail-desc').innerText = s.desc;
-            document.getElementById('detail-alibi').innerText = `"${s.alibi}"`;
-            document.getElementById('detail-motive').innerText = s.motive;
-            if (id === 'driver') {
-                document.getElementById('detail-alibi').innerText += ` Quote: ${s.quote}`;
+            const content = profileHtmls[id];
+            if (content) {
+                document.getElementById('paper-content-area').innerHTML = content;
+                const overlay = document.getElementById('profile-viewer');
+                overlay.style.display = 'flex';
+                // Trigger reflow to restart anim if needed
+                const doc = overlay.querySelector('.paper-doc');
+                if (doc) {
+                    doc.style.animation = 'none';
+                    doc.offsetHeight; /* trigger reflow */
+                    doc.style.animation = null;
+                }
+
+                audio.playFlip();
             }
-            document.getElementById('detail-modal').style.display = 'flex';
         }
 
         function openDriverModal() {
-            const s = driver;
-            document.getElementById('detail-name').innerText = s.name;
-            document.getElementById('detail-name').style.color = s.color;
-            document.getElementById('detail-role').innerText = s.role;
-            document.getElementById('detail-desc').innerText = s.desc;
-            document.getElementById('detail-alibi').innerText = `"${s.alibi}" Quote: ${s.quote}`;
-            document.getElementById('detail-motive').innerText = s.motive;
-            document.getElementById('detail-modal').style.display = 'flex';
+            openSuspectModal('driver');
+        }
+
+        function closeProfile() {
+            document.getElementById('profile-viewer').style.display = 'none';
+        }
+
+        // Keep for compatibility if needed (unused)
+        function closeDetailModal() {
+            document.getElementById('detail-modal').style.display = 'none';
         }
 
         function closeDetailModal() {
