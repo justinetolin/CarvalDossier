@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Carval Dossier</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --bg-paper: #f1f5f9;
+            --text-paper: #1e293b;
+            --text-light: #e2e8f0;
+            --accent-amber: #d97706;
+            /* Ramon */
+            --accent-purple: #8b5cf6;
+            /* Diego */
+            --accent-red: #ef4444;
+            /* Teresa */
+            --accent-green: #10b981;
+            /* Liza */
+            --accent-blue: #3b82f6;
+            /* Miguel */
+            --accent-gray: #94a3b8;
+            /* Driver */
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --shadow-deep: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            --font-head: 'Playfair Display', serif;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at top right, #ebebeb 0%, #fff8f8 100%);
+            color: var(--text-light);
+            font-family: var(--font-body);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        #game-stage {
+            background-image: radial-gradient(circle at top right, #1e293b 0%, #0f172a 100%);
+        }
+
+        /* SIDEBAR */
+        aside {
+            width: 360px;
+            background: rgba(15, 23, 42, 0.98);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            z-index: 20;
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar-header {
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--accent-amber);
+            padding-bottom: 1rem;
+        }
+
+        .case-title {
+            font-family: var(--font-mono);
+            color: var(--accent-amber);
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .main-title {
+            font-family: var(--font-head);
+            font-size: 1.8rem;
+            margin-top: 0.5rem;
+            color: var(--text-light);
+            line-height: 1.1;
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        .suspect-container {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .suspect-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .suspect-card:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            background: #273549;
+        }
+
+        .suspect-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            align-items: center;
+        }
+
+        .suspect-name {
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .prob-bar-track {
+            height: 6px;
+            background: #0f172a;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .prob-bar-fill {
+            height: 100%;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .driver-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #475569;
+            color: #94a3b8;
+            padding: 0.75rem;
+            text-align: center;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .driver-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .timer-display {
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            color: var(--accent-amber);
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border: 1px solid var(--accent-amber);
+            text-align: center;
+            border-radius: 4px;
+            background: rgba(217, 119, 6, 0.05);
+            font-weight: 700;
+        }
+
+        /* MAIN STAGE */
+        main {
+            flex: 1;
+            padding: 3rem;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3rem;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 800px;
+            animation: slideUp 0.6s ease-out;
+            flex-shrink: 0;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Story Card */
+        .story-card {
+            background: var(--bg-paper);
+            color: var(--text-paper);
+            padding: 0;
+            border-radius: 2px;
+            box-shadow: var(--shadow-deep);
+            overflow: hidden;
+            border: 1px solid #cbd5e1;
+        }
+
+        .story-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid var(--accent-amber);
+        }
+
+        .story-title {
+            font-family: var(--font-head);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .story-img-container {
+            background: #000;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            border-bottom: 1px solid #cbd5e1;
+        }
+
+        .story-img {
+            max-width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+        }
+
+        .story-content {
+            padding: 2rem;
+            font-family: var(--font-head);
+            font-size: 1.1rem;
+            line-height: 1.8;
+            background: #fff;
+        }
+
+        .story-controls {
+            padding: 1rem 2rem;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        /* Question Card */
+        .question-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--accent-blue);
+            border-radius: 8px;
+            padding: 2rem;
+            position: relative;
+        }
+
+
+
+        .question-text {
+            margin-top: 1.5rem;
+            font-size: 1.1rem;
+            font-family: var(--font-mono);
+            color: #fff;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .context-note {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            font-style: italic;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .mcq-option {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #334155;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--font-body);
+        }
+
+        .mcq-option:hover {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .mcq-option.selected {
+            border-color: var(--accent-amber);
+            background: rgba(217, 119, 6, 0.2);
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 1rem;
+            background: #0f172a;
+            border: 1px solid #475569;
+            color: var(--accent-blue);
+            font-family: var(--font-mono);
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn {
+            background: transparent;
+            border: 1px solid var(--text-paper);
+            color: var(--text-paper);
+            padding: 0.75rem 2rem;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .story-controls .btn {
+            border-color: var(--accent-amber);
+            color: var(--accent-amber);
+        }
+
+        .story-controls .btn:hover {
+            background: var(--accent-amber);
+            color: #fff;
+        }
+
+        .question-card .btn {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            width: 100%;
+            justify-content: center;
+        }
+
+        .question-card .btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        /* MODALS */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid #475569;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            color: #e2e8f0;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+            position: relative;
+        }
+
+        .modal-header {
+            background: #0f172a;
+            padding: 1.5rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .modal-title-text {
+            font-family: var(--font-head);
+            font-size: 1.8rem;
+            color: #fff;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: #fff;
+        }
+
+        .briefing-grid {
+            display: grid;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .person-item {
+            border-left: 3px solid #475569;
+            padding-left: 1rem;
+        }
+
+        .person-name {
+            font-weight: 700;
+            color: #fff;
+            font-size: 1.1rem;
+        }
+
+        .person-role {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .person-alibi {
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            margin-top: 0.25rem;
+        }
+
+        .feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            display: none;
+            border-radius: 4px;
+        }
+
+        .feedback.correct {
+            border: 1px solid var(--accent-green);
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-green);
+        }
+
+        .feedback.wrong {
+            border: 1px solid var(--accent-red);
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+        }
+
+        /* Sliders */
+        input[type=range] {
+            margin: 0.5rem 0;
+            width: 100%;
+            accent-color: var(--accent-amber);
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+
+        .slider-profile-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            /* Rounded square */
+            object-fit: cover;
+            border: 1px solid var(--glass-border);
+        }
+
+        .wait-progress {
+            width: 100%;
+            height: 4px;
+            background: #334155;
+            margin-top: 1rem;
+            border-radius: 2px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .wait-bar {
+            height: 100%;
+            background: var(--accent-amber);
+            width: 0%;
+            transition: width 5s linear;
+        }
+
+        #game-wrapper {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            transition: all 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+            transform-origin: center center;
+        }
+
+        /* Laptop Mode State */
+        #game-wrapper.laptop-mode {
+            transform: scale(0.7);
+            border-radius: 12px;
+            box-shadow: 0 0 0 10px #333, 0 0 0 12px #555, 0 20px 50px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+            /* Ensure rounded corners clip content */
+        }
+
+        /* Glitch Effect Classes */
+        @keyframes glitch-anim {
+            0% {
+                transform: translate(0)
+            }
+
+            20% {
+                transform: translate(-2px, 2px)
+            }
+
+            40% {
+                transform: translate(-2px, -2px)
+            }
+
+            60% {
+                transform: translate(2px, 2px)
+            }
+
+            80% {
+                transform: translate(2px, -2px)
+            }
+
+            100% {
+                transform: translate(0)
+            }
+        }
+
+        .glitching {
+            animation: glitch-anim 0.3s infinite;
+            filter: hue-rotate(90deg) contrast(1.5);
+            position: relative;
+        }
+
+        .terminal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            color: #33ff33;
+            font-family: 'JetBrains Mono', monospace;
+            display: none;
+            /* hidden by default */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            text-align: center;
+        }
+
+        /* Hacking Background */
+        .hacking-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 2s;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: rgba(51, 255, 51, 0.1);
+            line-height: 1;
+        }
+
+        @keyframes scroll-hacking {
+            from {
+                transform: translateY(0);
+            }
+
+            to {
+                transform: translateY(-50%);
+            }
+        }
+
+        .hacking-content {
+            animation: scroll-hacking 10s linear infinite;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="game-wrapper">
+        <aside>
+            <div class="sidebar-header">
+                <div class="case-title">Classified File</div>
+                <div class="main-title">The Carval Dossier</div>
+                <div class="subtitle">The mystery within government corruption</div>
+            </div>
+
+            <div
+                style="font-family: var(--font-mono); font-size: 0.7rem; color: #64748b; text-transform: uppercase; margin-bottom: 1rem;">
+                Suspect Probabilities
+            </div>
+
+            <div class="suspect-container" id="suspects-list"></div>
+
+            <!-- Driver is now in the list, button removed -->
+
+            <div class="timer-display" id="game-timer">00:00:00</div>
+        </aside>
+
+        <main id="game-stage">
+            <!-- Cards appended here -->
+        </main>
+
+        <!-- INSTRUCTIONS MODAL -->
+        <div class="modal-overlay" id="instructions-modal">
+            <div class="modal-content">
+                <button class="close-modal" onclick="closeInstructions()"><i data-lucide="x"></i></button>
+                <div class="modal-header">
+                    <div class="modal-title-text" style="color: var(--accent-amber);">Mission Protocol</div>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom: 1rem;"><strong>Your Objective:</strong> Identify the killer of Cassie
+                        Carval
+                        and prevent the deletion of the Dossier.</p>
+                    <p style="margin-bottom: 1rem;"><strong>Mechanics:</strong></p>
+                    <ul style="margin-left: 1.5rem; margin-bottom: 1.5rem; line-height: 1.6; color: #cbd5e1;">
+                        <li>Analyze story cards and evidence.</li>
+                        <li>Solve probability problems to unlock clues.</li>
+                        <li>Bayesian updates will refine your suspicion.</li>
+                        <li>The <strong>Timer</strong> is running. Speed and accuracy matter.</li>
+                        <li>At the end, you must identify the killer and enter the correct passphrase.</li>
+                    </ul>
+                    <div
+                        style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--accent-red); padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
+                        <strong>WARNING:</strong> Incorrect passphrase entry will result in a total system wipe.
+                    </div>
+                    <button class="btn" onclick="proceedToGame()"
+                        style="width: 100%; justify-content: center; border-color: var(--accent-green); color: var(--accent-green);">
+                        INITIATE INVESTIGATION
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- DETAIL MODAL -->
+        <div class="modal-overlay" id="detail-modal">
+            <div class="modal-content">
+                <button class="close-modal" onclick="closeDetailModal()"><i data-lucide="x"></i></button>
+                <div class="modal-header">
+                    <div class="modal-title-text" id="detail-name">Name</div>
+                    <div style="font-family: var(--font-mono); color: var(--accent-blue); margin-top: 0.5rem;"
+                        id="detail-role">Role</div>
+                </div>
+                <div class="modal-body">
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4
+                            style="color: #94a3b8; font-family: var(--font-mono); font-size: 0.8rem; margin-bottom: 0.5rem;">
+                            PERSONALITY</h4>
+                        <p id="detail-desc" style="line-height: 1.5;"></p>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4
+                            style="color: #94a3b8; font-family: var(--font-mono); font-size: 0.8rem; margin-bottom: 0.5rem;">
+                            ALIBI</h4>
+                        <p id="detail-alibi"
+                            style="font-style: italic; color: #cbd5e1; border-left: 2px solid #475569; padding-left: 1rem;">
+                        </p>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4
+                            style="color: #94a3b8; font-family: var(--font-mono); font-size: 0.8rem; margin-bottom: 0.5rem;">
+                            MOTIVE</h4>
+                        <p id="detail-motive" style="color: var(--accent-red);"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- End Game Wrapper -->
+    <script>
+        // --- GAME DATA ---
+        // --- GAME DATA ---
+        const suspects = [
+            {
+                id: 'ramon', name: 'Ramon Alvarado', role: 'DPWH Usec', prob: 20, color: '#d97706',
+                desc: "By-the-book, anxious about exposure. Keeps a briefcase tight.",
+                alibi: "Retired early to room G2. Did not leave.",
+                motive: "Dossier contains memos linking him to bad contracts.",
+                img: 'Profile_Ramon Alvarado.jpeg'
+            },
+            {
+                id: 'diego', name: 'Diego Santos', role: 'House Speaker', prob: 20, color: '#8b5cf6',
+                desc: "Commanding, ambitious. Quick to protect allies.",
+                alibi: "Walked alone 00:15–00:45 to clear head.",
+                motive: "Exposure threatens his political network/funding.",
+                img: 'Profile_Diego Santos.png'
+            },
+            {
+                id: 'teresa', name: 'Teresa Valdez', role: 'Congresswoman', prob: 20, color: '#ef4444',
+                desc: "Calculated. Has quiet influence on allocations.",
+                alibi: "Stepped onto balcony at 00:50 for a call.",
+                motive: "District received questionable allocations.",
+                img: 'Profile_Teresa Valdez.jpeg'
+            },
+            {
+                id: 'liza', name: 'Liza Mendoza', role: 'Senator', prob: 20, color: '#10b981',
+                desc: "Procedural, influential in committees.",
+                alibi: "In library until 23:40, then room.",
+                motive: "Legislative actions allowed permit fast-tracking.",
+                img: 'Profile_Liza Mendoza.png'
+            },
+            {
+                id: 'miguel', name: 'Miguel Reyes', role: 'Legal Counsel', prob: 20, color: '#3b82f6',
+                desc: "Smooth, legally savvy. excellent at reading leverage.",
+                alibi: "Clearing dishes until 01:00.",
+                motive: "Protecting clients tied to executive network.",
+                img: 'Profile_Miguel Reyes.png'
+            }
+        ];
+
+        const driver = {
+            id: 'driver', name: 'Jose "Joey" Alba', role: 'Driver', color: '#94a3b8',
+            desc: "Longtime driver and aide. Loyal friend to Cassie.",
+            alibi: "Slept in garage. Found body at 06:22.",
+            motive: "None apparent.",
+            quote: "She used to say... some people choose sense, others choose feeling. But the Dashwoods had both.",
+            img: 'Profile_Driver Jose Delos.jpeg'
+        };
+        // Driver object merged into suspects, removed standalone const driver
+
+        const phases = [
+            {
+                story: { title: "Phase 1 — Prologue: Cassie Carval", img: "SP1 Prologue.png", text: "Cassie Carval was once the Undersecretary of the Department of Public Works and Highways (DPWH). Years inside the system gave her access to documents few ever saw—budget reallocations, padded contracts, and flood control projects whose costs ballooned while communities remained submerged. Before resigning, Cassie compiled a comprehensive dossier detailing these anomalies, implicating not just DPWH officials but also members of Congress, the Senate, and other government offices. She believed that transparency required courage—and preparation." },
+                q: { type: 'mcq', text: "Question 1: Which of the following pairs of events are mutually exclusive?", context: "Narrative context: The killer is one of the guests.", options: ["“The killer is a guest” and “The killer is a government official”", "“The killer entered through the front door” and “The killer entered through the back door”", "“The killer is Miguel Reyes” and “The killer is Senator Liza Mendoza”", "“The killer had motive” and “The killer had opportunity”"], correct: 2, nice: "Correct. A person cannot be both Miguel and Liza simultaneously.", bad: "Incorrect. Mutually exclusive means they cannot both be true." }
+            },
+            {
+                story: { title: "Phase 2 — The Invitation", img: "SP2 The Invitation.jpeg", text: "On December 19, 2025, Cassie invited five people she once trusted to her mountain house in Benguet. Each held power, each had something to lose if the dossier became public. Cassie told them she possessed a hard copy of the files, secured in a safe inside her study. She framed the meeting as a final conversation—an opportunity for honesty before she decided her next move." },
+                q: { type: 'mcq', text: "Question 2: Which pair of events can occur at the same time? (Mutually Inclusive)", context: "Detective reviews motives.", options: ["“The suspect works in DPWH” and “The suspect is implicated in flood-control anomalies”", "“The suspect was asleep” and “The suspect was seen on camera at 00:25”", "“The suspect destroyed evidence” and “The suspect is innocent of murder”", "“The suspect had no motive” and “The suspect stole the dossier”"], correct: 2, nice: "Correct. Destroying evidence (like pages) does not always mean murder.", bad: "Incorrect. Look for events that can happen together." }
+            },
+            {
+                story: {
+                    title: "Phase 3 — The Night Before",
+                    segments: [
+                        { img: "SP3.1 Night Before.jpeg", text: "The evening unfolded over dinner and drinks. Cassie openly discussed the corruption she uncovered, describing manipulated flood control budgets and falsified completion reports. Her guests listened carefully. Some questioned her conclusions. Others remained silent. Wine glasses clinked, but the atmosphere grew heavier as the night went on." },
+                        { img: "SP3.2 Night Before.jpeg", text: "As the gathering continued, smaller conversations formed. Two of the guests stepped aside, speaking in hushed tones about the consequences of exposure—political collapse, investigations, prison. Cassie remained in the background, holding the dossier, watching closely. Whatever trust once existed among them was visibly strained." }
+                    ]
+                },
+                q: { type: 'mcq', text: "Question 3: Which statement best describes the camera glitch and the killer’s motive?", context: "Camera glitch: 00:20–00:23. Independence.", options: ["The glitch caused the motive", "The motive caused the glitch", "The glitch and motive are independent events", "The glitch proves intent to kill"], correct: 2, nice: "Correct. A technical failure and human motive are independent. There's no evidence of hacking, anyways.", bad: "Incorrect. One did not cause the other." }
+            },
+            {
+                story: { title: "Phase 4 — The Safe", img: "SP4 The Safe.png", text: "Later that night, Cassie retreated to her study. She placed the dossier inside her wall-mounted safe, entering a six-digit numerical code she had carefully chosen. The safe clicked shut. The hard copy was secure—for now. Cassie believed that even if one layer failed, others would hold." },
+                q: { type: 'mcq', text: "Question 4: Which statement is most reasonable regarding Conditional Probability?", context: "The safe was opened without force.", options: ["If the safe was opened, then the killer must be Cassie", "If the killer knew the PIN, then the safe could be opened", "If the safe was opened, then everyone knew the PIN", "If the PIN was known, then murder was inevitable"], correct: 1, nice: "Correct. Knowing the PIN is a condition enabled opening.", bad: "Incorrect. Focus on necessity." }
+            },
+            {
+                // Q5 - Dynamic content filled by loadPhase
+                story: { title: "Phase 5 — Morning Discovery", img: "", text: "The following morning, Cassie’s driver, Jose Delos, entered the house to prepare for the day. In the main hall on the first floor, he found Cassie lying motionless on the floor, blood pooling beneath her. She was already dead. The guests were still inside the house. No one had left overnight." },
+                q: { type: 'solve', text: "Question 5: Dynamic Placeholder", context: null, answer: 0.4, nice: "Correct.", bad: "Incorrect." }
+            },
+            {
+                story: { title: "Phase 6 — Initial Assessment", img: "SP6 Initial Assessment.png", text: "The scene showed no signs of forced entry. Furniture was undisturbed. A blood trail suggested Cassie had moved from another part of the house before collapsing in the hall. The house layout made it clear: anyone inside that night could have reached her. This was not seen in the camera though. Could it be the glitched part of the camera?" },
+                q: { type: 'solve', text: "Question 6: What is the probability that a suspect is implicated OR present during the glitch?", context: "Three suspects are implicated in DPWH flood-control anomalies: Ramon, Diego, Teresa.<br>Two suspects were present during the camera glitch window: Liza, Teresa.", answer: 0.8, nice: "Correct. 0.6 + 0.4 - 0.2 = 0.8", bad: "Incorrect. Remember to subtract the intersection." }
+            },
+            {
+                story: { title: "Phase 7 — The Empty Safe", img: "SP7 Empty Safe.jpeg", text: "When investigators opened the safe in Cassie’s study, it was empty. The hard-copy dossier was gone. There were faint smudge marks on the keypad—too many to identify a single person, but enough to confirm the safe had been opened after Cassie secured it." },
+                q: { type: 'solve', text: "Question 7: What is the probability that Miguel could have taken the dossier, (meaning that he either knew the safe code OR gained access without knowing it) AND had uninterrupted access to the study?", context: "Investigators conclude that the killer must have either personally known the six-digit safe code OR gained access while Cassie was distracted—but to successfully remove the dossier unnoticed, the killer still needed uninterrupted access to the study. Investigators focus on Miguel Reyes, whose legal work often brought him into Cassie’s study that night.<br><br>P(Miguel knows the safe code) = 0.42<br>P(Miguel gains access to the study without knowing the code) = 0.23<br>P(Miguel has uninterrupted access to the study) = 0.59", answer: 0.3835, nice: "Correct. 0.65 * 0.59 = 0.3835", bad: "Incorrect. Multiply 0.65 * 0.59 and keep 4 decimals." }
+            },
+            {
+                story: { title: "Phase 8 — The Camera Gap", img: "SP8 The Camera Gap.jpeg", text: "Security footage from inside the house revealed a critical gap. Between 12:20 a.m. and 12:23 a.m., the cameras glitched. The blackout was brief—but long enough for someone to move unseen between rooms." },
+                q: { type: 'solve', text: "Question 8: What is the probability that the suspect was moving through the house during the blackout window?", context: "Given:<br>P(Camera blackout) = 0.3<br>P(Suspect moving during blackout | Camera blackout) = 0.7", answer: 0.21, nice: "Correct. 0.3 * 0.7 = 0.21. Suspicion rises.", bad: "Incorrect. Multiply probabilities." }
+            },
+            {
+                story: { title: "Phase 9 — The Kitchen", img: "SP9 The Kitchen.jpeg", text: "In the kitchen, investigators found a crumpled napkin with handwritten digits: “2 – 7 – 6.” Nearby, a knife block sat on the counter, missing one large kitchen knife. The rest of the kitchen appeared clean, almost deliberately so." },
+                q: {
+                    type: 'dropdown_solve',
+                    text: "Question 9: Napkin found. Calculate Joint Probability P(Napkin AND Used Kitchen). Select Suspect.",
+                    context: "Who should you analyze? Who should be your focus?",
+                    answer: 0.4988,
+                    nice: "Correct. Miguel's connection to the kitchen is significant.",
+                    bad: "Incorrect logic or suspect choice.",
+                    boost: 'miguel', boostVal: 10
+                }
+            },
+            {
+                story: { title: "Phase 10 — Outside the House", img: "SP10 Outside House.png", text: "Behind the house, muddy footprints led from a back door toward the garden before disappearing. The ground suggested someone had stepped outside briefly and returned, possibly to discard or hide something. <br>  Investigators theorize that the killer wrapped the knife in a cloth before briefly stepping outside to discard or clean it. One suspect had mud on their shoes the next morning." },
+                q: { type: 'branching', text: "Question 10: Choose an investigative path.", context: "Decide which lead to pursue.", answer: 0, nice: "", bad: "" }
+            },
+            {
+                story: {
+                    title: "Phase 11 — Personal Items",
+                    segments: [
+                        { img: "SP11.1 Personal Items.png", text: "In one guest’s room, a legal pad lay on a bedside table. Several numbers were written repeatedly, some lightly circled. It was unclear whether they were calculations, notes, or something else entirely." },
+                        { img: "SP11.2 Personal Items.png", text: "Under the same bed, investigators later discovered a napkin stained with blood, partially hidden from view. It matched the texture of the napkin found in the kitchen." }
+                    ]
+                },
+                q: { type: 'solve', text: "Question 11: Blood under bed. Find Joint P(Killer AND Blood).", context: "Given:<br>P(Killer|Blood)=0.72<br>P(Blood)=0.24", answer: 0.1728, nice: "Correct. 0.1728.", bad: "Incorrect. Multiply." }
+            },
+            {
+                story: { title: "Phase 12 — Burned Pages", img: "SP12 Burned Pages.png", text: "In Senator Liza's trash bin, investigators found partially burned documents. Though damaged, fragments clearly showed flood control project titles, peso amounts, and ledger-style tables. It appeared to be part of Cassie’s dossier—but not all of it." },
+                q: { type: 'solve', text: "Question 12: Update P(Liza Killer | Burned Pages).", context: "Given:<br>P(Burn | Liza)=0.61<br>P(Burn | ~Liza)=0.55.<br>Bayes: P(A|B) = P(B|A)P(A) / P(B)", answer: 0.23, nice: "Correct. 0.23.", bad: "Incorrect. Recalculate your formula.", set: 'liza', setVal: 23 }
+            },
+            {
+                story: { title: "Phase 13 — The Driver’s Words", img: "SP13 Drivers Words.png", text: "Jose Alba gave his statement calmly. He spoke about Cassie’s habits, her belief in responsibility and compassion, and her fondness for stories where reason and conscience must coexist. He mentioned that Cassie always believed in preparing for the worst while hoping for the best.<br><br>Meanwhile, the investigator has the results on the fingerprints on safe." },
+                q: { type: 'solve', text: "Question 13: Given the fingerprint evidence, what is the updated probability that Miguel is the killer?", context: "Given:<br>P(Print | Miguel)=0.85<br>P(Print | ~Miguel)=0.14", answer: 0.82, nice: "Correct. Near certainty at 0.82.", bad: "Incorrect.", set: 'miguel', setVal: 87 }
+            },
+            {
+                story: { title: "Phase 14 — Resolution", img: "SP15 Resolution.jpeg", text: "With the evidence laid out—the missing dossier, the burned fragments, the safe, the phone/pad evidence, and the shifting alibis—the case now rests in the detective’s hands. The truth is within reach. It is time to make an arrest." },
+                q: { type: 'mcq', text: "Final Decision: Who is the Killer?", context: "Select the suspect with the highest probability/evidence load.", options: ["Ramon Alvarado", "Diego Santos", "Teresa Valdez", "Liza Mendoza", "Miguel Reyes"], correct: 4, nice: "CORRECT. Miguel Reyes is the killer.", bad: "INCORRECT. Review the evidence." }
+            },
+            {
+                story: { title: "Phase 15 — The Second Phone", img: "SP14 Second Phone.jpeg", text: "Excellent work, Detective. You have the killer. But the hard copy dossier was destroyed or lost. However... a second phone belonging to Cassie was discovered hidden in her study. It displays a single message: “Speak the trusted phrase.” Failure to unlock this means the corruption remains hidden." },
+                q: { type: 'text_solve', text: "Enter the Passphrase:", context: "Recall the Driver's statement in your case briefing. You have 3 attempts.", answer: "DASHWOOD", nice: "ACCESS GRANTED. DOSSIER UPLOADING...", bad: "ACCESS DENIED." }
+            }
+        ];
+
+        let currentPhase = 0;
+        let p15Attempts = 0;
+        let startTime = null;
+        let timerInterval = null;
+
+        // --- INIT ---
+        function init() {
+            lucide.createIcons();
+            loadBriefing();
+            updateSuspectDisplay();
+        }
+
+        function loadBriefing() {
+            const stage = document.getElementById('game-stage');
+            stage.innerHTML = '';
+
+            const card = document.createElement('div');
+            card.className = 'card story-card';
+            // Fix visibility by enforcing dark theme for this classified document
+            card.style.background = 'var(--bg-panel)';
+            card.style.color = 'var(--text-light)';
+            card.style.border = '1px solid var(--accent-amber)';
+
+            // Briefing Content: Include Driver
+            const allPeople = [...suspects, driver];
+
+            let alibiGrid = allPeople.map(s => `
+                <div class="person-item" style="border-color: ${s.color};">
+                    <div class="person-name" style="color:#fff">${s.name}</div>
+                    <div class="person-role">${s.role}</div>
+                    <div class="person-alibi" style="color:#94a3b8">"${s.alibi}"</div>
+                </div>
+            `).join('');
+
+            card.innerHTML = `
+                <div class="story-header" style="border-bottom-color: var(--accent-amber)">
+                    <div class="story-title" style="color: var(--accent-amber)">Classified Briefing</div>
+                </div>
+                <div class="story-content" style="background: var(--bg-panel); color: var(--text-light)">
+                    <p style="margin-bottom: 1.5rem; line-height: 1.6;">
+                        <strong>Victim:</strong> Cassandra 'Cassie' Carval, former DPWH Undersecretary.<br>
+                        <strong>Context:</strong> Cassie compiled a dossier on corruption. Found dead in her hall. The
+                        dossier is missing from her safe.<br>
+                        <strong>Objective:</strong> Analyze evidence, calculcate probabilities, and identify the killer.
+                    </p>
+                    <h3 style="font-family: var(--font-mono); color: var(--accent-amber); margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase;">
+                        Review Suspect Alibis
+                    </h3>
+                    <div class="briefing-grid">
+                        ${alibiGrid}
+                    </div>
+
+                    <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 4px; margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1rem; font-family: var(--font-mono); color: var(--accent-blue);">Assign Initial Suspicion</h3>
+                        <p style="font-size: 0.85rem; margin-bottom: 1rem; color: #94a3b8;">Set your "gut priors". Must sum to 100%. Max 50% per suspect.</p>
+                        <div id="sliders-container"></div>
+                        <div id="slider-total" style="text-align: right; font-family: var(--font-mono); margin-top: 1rem;">Total: 100%</div>
+                        <button class="btn" id="start-btn" onclick="openInstructions()"
+                            style="width: 100%; margin-top: 1rem; border-color: var(--accent-amber); color: var(--accent-amber);">
+                            Accept Case
+                        </button>
+                    </div>
+                </div>
+            `;
+            stage.appendChild(card);
+            renderSliders();
+        }
+
+        function renderSliders() {
+            const container = document.getElementById('sliders-container');
+            container.innerHTML = suspects.map(s => `
+                <div class="slider-row">
+                    <img src="${s.img}" class="slider-profile-img" alt="${s.name}">
+                    <div style="flex:1">
+                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-family:var(--font-mono); color:${s.color}">
+                            <span>${s.name}</span> <span id="val-${s.id}">${parseInt(s.prob)}%</span>
+                        </div>
+                        <input type="range" class="prior-slider" data-id="${s.id}" min="0" max="50" value="${parseInt(s.prob)}" oninput="updateSlider('${s.id}', this.value)">
+                    </div>
+                </div>
+            `).join('');
+            updateSliderTotal();
+        }
+
+        function updateSlider(id, val) {
+            document.getElementById(`val-${id}`).innerText = val + '%';
+            updateSliderTotal();
+        }
+
+        function updateSliderTotal() {
+            const inputs = document.querySelectorAll('.prior-slider');
+            let total = 0;
+            inputs.forEach(input => total += parseInt(input.value));
+            const totalDisplay = document.getElementById('slider-total');
+            totalDisplay.innerText = `Total: ${total}%`;
+
+            const btn = document.getElementById('start-btn');
+
+            if (total === 100) {
+                totalDisplay.style.color = 'var(--accent-green)';
+                btn.disabled = false;
+                btn.style.opacity = 1;
+            } else {
+                totalDisplay.style.color = 'var(--accent-red)';
+                btn.disabled = true;
+                btn.style.opacity = 0.5;
+            }
+        }
+
+        function openInstructions() {
+            document.getElementById('instructions-modal').style.display = 'flex';
+        }
+
+        function closeInstructions() {
+            document.getElementById('instructions-modal').style.display = 'none';
+        }
+
+        function proceedToGame() {
+            closeInstructions();
+            startGame();
+        }
+
+        function startGame() {
+            // Apply priors
+            const inputs = document.querySelectorAll('.prior-slider');
+            inputs.forEach(input => {
+                const id = input.getAttribute('data-id');
+                const val = parseInt(input.value);
+                const s = suspects.find(x => x.id === id);
+                s.prob = val;
+            });
+            updateSuspectDisplay();
+            startTimer();
+            // Clear Briefing
+            document.getElementById('game-stage').innerHTML = '';
+            loadPhase(0);
+        }
+
+        function updateSuspectDisplay() {
+            const list = document.getElementById('suspects-list');
+
+            // Suspects
+            let html = suspects.map(s => `
+                <div class="suspect-card" onclick="openSuspectModal('${s.id}')">
+                    <div class="suspect-info">
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                             <img src="${s.img}" class="slider-profile-img" style="width:30px; height:30px;">
+                             <span class="suspect-name" style="color:${s.color}">${s.name}</span>
+                        </div>
+                        <span style="font-family: var(--font-mono); font-size: 0.8rem; color:${s.color}">${s.prob.toFixed(1)}%</span>
+                    </div>
+                    <div class="prob-bar-track">
+                        <div class="prob-bar-fill" style="width: ${s.prob}%; background-color: ${s.color}"></div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Driver
+            html += `
+                <div class="suspect-card" onclick="openDriverModal()" style="border-style: dashed; opacity: 0.8;">
+                    <div class="suspect-info">
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                             <img src="${driver.img}" class="slider-profile-img" style="width:30px; height:30px;">
+                             <span class="suspect-name" style="color:${driver.color}">${driver.name}</span>
+                        </div>
+                        <span style="font-family: var(--font-mono); font-size: 0.8rem; color:${driver.color}">Witness</span>
+                    </div>
+                </div>
+            `;
+
+            list.innerHTML = html;
+        }
+
+        // --- PHASE LOGIC ---
+        function loadPhase(idx) {
+            currentPhase = idx;
+            const phase = phases[idx];
+            if (!phase) {
+                return;
+            }
+
+            // DYNAMIC UPDATE FOR Q5 (Phase 4 index in 0-based? No, Q1=Phase0, Q5=Phase4)
+            if (currentPhase === 4) { // Question 5
+                // Get top 2 suspects
+                const sorted = [...suspects].sort((a, b) => b.prob - a.prob);
+                const s1 = sorted[0];
+                const s2 = sorted[1];
+                const combinedProb = (s1.prob + s2.prob) / 100;
+
+                phase.q.text = `Question 5: What is the probability that the killer is either ${s1.name} OR ${s2.name}?`;
+                phase.q.answer = combinedProb;
+                phase.q.nice = `Correct. ${s1.prob / 100} + ${s2.prob / 100} = ${combinedProb.toFixed(2)}`;
+                phase.q.context = null; // Remove hint
+            }
+
+            // DYNAMIC UPDATE FOR Q12 (Burned Pages) - Update based on logic
+            if (currentPhase === 11) { // Q12 is 12th item (index 11)
+                // Just ensure context is safe
+            }
+
+            const stage = document.getElementById('game-stage');
+
+            // Story Card
+            const storyCard = document.createElement('div');
+            storyCard.className = 'card story-card';
+
+            let contentHTML = '';
+
+            if (phase.story.segments) {
+                // Multi-part story
+                contentHTML = phase.story.segments.map(seg => `
+                    <div style="margin-bottom: 2rem;">
+                         ${seg.img ? `<div class="story-img-container"><img src="${seg.img}" class="story-img" alt="Evidence"></div>` : ''}
+                         <div class="story-content">${seg.text}</div>
+                    </div>
+                `).join('<hr style="border-color:var(--glass-border); margin: 2rem 0;">');
+            } else {
+                // Classic single story
+                let imgHTML = '';
+                if (phase.story.img) {
+                    imgHTML = `<div class="story-img-container"><img src="${phase.story.img}" class="story-img" alt="Evidence"></div>`;
+                }
+                contentHTML = `${imgHTML}<div class="story-content">${phase.story.text}</div>`;
+            }
+
+            storyCard.innerHTML = `
+                <div class="story-header"><div class="story-title">${phase.story.title}</div></div>
+                ${contentHTML}
+                <div class="story-controls">
+                    <button class="btn" onclick="showQuestion(this)">Proceed to Analysis <i data-lucide="arrow-right"></i></button>
+                </div>
+            `;
+            stage.appendChild(storyCard);
+            lucide.createIcons();
+            stage.scrollTop = stage.scrollHeight;
+        }
+
+        function showQuestion(btn, overrideData = null) {
+            if (btn) btn.style.display = 'none';
+
+            const phase = phases[currentPhase];
+            // Allow sub-branch overrides (for Phase 10)
+            const qData = overrideData || phase.q;
+            window.currentQData = qData;
+
+            const stage = document.getElementById('game-stage');
+            const qCard = document.createElement('div');
+            qCard.className = 'card question-card';
+
+            // Generate HTML based on type
+            let inputHTML = '';
+            let extraContextHTML = '';
+
+            if (qData.type === 'mcq') {
+                inputHTML = qData.options.map((opt, i) =>
+                    `<div class="mcq-option" onclick="selectOption(this, ${i})">${opt}</div>`
+                ).join('') + `<input type="hidden" id="selected-answer">`;
+
+            } else if (qData.type === 'solve' || qData.type === 'solve_dynamic') {
+                inputHTML = `<input type="number" id="num-input" placeholder="0.0" step="0.01">`;
+
+            } else if (qData.type === 'text_solve') {
+                inputHTML = `<input type="text" id="text-input" placeholder="Enter Passphrase...">`;
+
+            } else if (qData.type === 'dropdown_solve') {
+                // Suspect Dropdown
+                // Suspect Dropdown
+                const suspectOpts = suspects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                inputHTML = `
+                    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+                        <div id="dynamic-given" style="flex:1; font-family:var(--font-mono); font-size:0.85rem; color:#94a3b8; background:rgba(0,0,0,0.2); padding:0.8rem; border-radius:4px; display:none;">
+                            <!-- Updated by JS -->
+                        </div>
+                        <div style="flex:0 0 220px;">
+                            <select id="suspect-select" class="btn" style="width:100%; text-align:left; background:var(--bg-dark);" onchange="updateDropdownContext('${qsId(qData)}', this.value)">
+                                <option value="">&lt;Select Suspect&gt;</option>
+                                ${suspectOpts}
+                            </select>
+                        </div>
+                    </div>
+                    <input type="number" id="num-input" placeholder="0.0" step="0.01">
+                `;
+
+            } else if (qData.type === 'branching') {
+                // Phase 10 Buttons
+                inputHTML = `
+                    <button class="btn" style="width:100%; margin-bottom:0.8rem;" onclick="loadBranch('miguel')">Investigate Miguel</button>
+                    <button class="btn" style="width:100%;" onclick="loadBranch('footprints')">Inspect Footprints outside</button>
+                `;
+            }
+
+            // Context rendering
+            const contextText = qData.context ? `<span class="context-note">${qData.context}</span>` : '';
+
+            // Render
+            qCard.innerHTML = `
+                <div class="question-header" style="background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); font-family: var(--font-mono); font-size: 0.7rem; padding: 6px 16px; border-bottom: 1px solid var(--accent-blue); margin: -2rem -2rem 1.5rem -2rem; border-radius: 8px 8px 0 0;">
+                    LOGIC TERMINAL // INVESTIGATION LOG
+                </div>
+                <div class="question-text">${qData.text}</div>
+                ${contextText}
+                ${extraContextHTML}
+                ${inputHTML}
+                ${qData.type !== 'branching' ? `<button class="btn" id="submit-btn" onclick="submitAnswer(this)">Submit Analysis</button>` : ''}
+                <div class="feedback"></div>
+            `;
+
+            stage.appendChild(qCard);
+            stage.scrollTop = stage.scrollHeight;
+
+            // Enter Key Listener (for inputs)
+            const inputs = qCard.querySelectorAll('input');
+            inputs.forEach(inp => {
+                inp.addEventListener('keyup', (e) => {
+                    if (e.key === 'Enter') submitAnswer(qCard.querySelector('#submit-btn'));
+                });
+            });
+        }
+
+        // Helper to ID questions for context updates
+        function qsId(qData) {
+            if (qData.text.includes('Kitchen')) return 'q8';
+            if (qData.text.includes('Footprints') || qData.text.includes('muddy shoes')) return 'q10';
+            return '';
+        }
+
+        // BRANCHING HANDLER for Q10
+        function loadBranch(path) {
+            const stage = document.getElementById('game-stage');
+            stage.lastChild.remove();
+
+            if (path === 'miguel') {
+                // Investigate Miguel
+                const migProb = (suspects.find(s => s.id === 'miguel').prob) / 100 || 0.2;
+                const numerator = (0.96 * migProb);
+                const denominator = numerator + (0.34 * (1 - migProb));
+                const answer = numerator / denominator;
+
+                const newQ = {
+                    type: 'solve_dynamic',
+                    text: `Question 10 (Investigate Miguel): What is P(Miguel is killer | Napkin digits)?`,
+                    context: "Given:<br>P(Digits|Miguel) = 0.96<br>P(Digits|~Miguel) = 0.34",
+                    answer: answer,
+                    nice: `Correct. Miguel's probability rises to ${answer.toFixed(2)}.`,
+                    bad: `Incorrect. P(M|D) = (0.96 * ${migProb.toFixed(2)}) / ...`,
+                    set: 'miguel',
+                    setVal: answer * 100
+                };
+                showQuestion(null, newQ);
+
+            } else if (path === 'footprints') {
+                // Inspect Footprints (Numeric Solve)
+                const newQ = {
+                    type: 'solve', // Changed from dropdown_solve
+                    text: "Question 10: Given that muddy shoes were observed, what is the probability that this suspect is the killer?",
+                    context: "Given:<br>P(Muddy | Killer) = 0.93<br>P(Muddy | ~Killer) = 0.27<br>(Use the current probability from the sidebar for your suspect of choice)",
+                    nice: "Correct. Now, that's sus!",
+                    bad: "Incorrect. Remember Bayes' Theorem: P(Killer | Muddy) = [P(Muddy | Killer) * P(Killer)] / P(Muddy)",
+                    showSolutionAfter: 3 // Updated threshold
+                };
+                showQuestion(null, newQ);
+            }
+        }
+
+        // Distractor Values for Q9/Q10 (x used kitchen/footprints & Napkin|used)
+        const distractors = {
+            'ramon': [0.09, 0.49],
+            'diego': [0.12, 0.37],
+            'teresa': [0.13, 0.37],
+            'liza': [0.18, 0.28],
+            // fallbacks
+            'driver': [0.23, 0.27]
+        };
+
+        // UPDATE DROPDOWN
+        function updateDropdownContext(qid, suspectId) {
+            const div = document.getElementById('dynamic-given');
+            if (!div) return; // Safety check
+            div.style.display = 'block';
+
+            if (qid === 'q8') { // Kitchen Napkin (Q9 in text, indexed as Q8 logic ID)
+                if (suspectId === 'miguel') {
+                    div.innerHTML = `Given:<br>P(Miguel used kitchen) = 0.58<br>P(Napkin|Used) = 0.86`;
+                } else {
+                    const vals = distractors[suspectId] || [0.10, 0.10];
+                    div.innerHTML = `Given:<br>P(${suspectId.charAt(0).toUpperCase() + suspectId.slice(1)} used kitchen) = ${vals[0]}<br>P(Napkin|Used) = ${vals[1]}`;
+                }
+            }
+            else if (qid === 'q10') { // Footprints - THIS SECTION WAS MISSING THE SUSPECT CHECK
+                if (!suspectId) {
+                    div.style.display = 'none';
+                    return;
+                }
+
+                const s = suspects.find(x => x.id === suspectId);
+                if (!s) return;
+
+                // Use current probability from sidebar (dynamic)
+                const pPrior = s.prob / 100;
+
+                div.innerHTML = `Given:<br>P(Suspect is the killer) = ${pPrior.toFixed(2)}<br>P(Muddy shoes | Suspect is the killer) = 0.93<br>P(Muddy shoes | Suspect is not the killer) = 0.27`;
+            }
+        }
+
+        function selectOption(el, index) {
+            el.parentElement.querySelectorAll('.mcq-option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            el.parentElement.querySelector('#selected-answer').value = index;
+        }
+
+        function submitAnswer(btn) {
+            const card = btn.parentElement;
+            const feedbackEl = card.querySelector('.feedback');
+            const qData = window.currentQData || phases[currentPhase].q;
+
+            // Attempt Tracking
+            if (typeof qData.attempts === 'undefined') qData.attempts = 0;
+
+            let isCorrect = false;
+            let val = null;
+            let selectedS = null;
+            let target = null;
+            let precision = 2; // Default precision for most questions
+            let calculationNote = "";
+
+            // 1. MCQ
+            if (qData.type === 'mcq') {
+                const inp = card.querySelector('#selected-answer');
+                val = inp ? inp.value : '';
+                if (val === '') return;
+                isCorrect = parseInt(val) === qData.correct;
+
+                // 2. SOLVE / TEXT
+            } else if (qData.type === 'solve' || qData.type === 'solve_dynamic') {
+                val = parseFloat(card.querySelector('#num-input').value);
+
+                // Special Case: Q7 (Phase 6) requires 4 decimals
+                if (currentPhase === 6) precision = 4;
+
+                // Special: Q12 (Liza) & Q13 (Miguel) need dynamic calculation based on sidebar
+                if (currentPhase === 11) { // Q12 Burned Pages
+                    const liza = suspects.find(s => s.id === 'liza');
+                    const pLiza = liza.prob / 100;
+                    // Formula: P(Burn|Liza)=0.61, P(Burn|~Liza)=0.55
+                    const num = 0.61 * pLiza;
+                    const den = num + (0.55 * (1 - pLiza));
+                    target = num / den;
+                    calculationNote = `Solution: (${0.61} * ${pLiza.toFixed(2)}) / [(${0.61} * ${pLiza.toFixed(2)}) + (0.55 * ${(1 - pLiza).toFixed(2)})] = ${target.toFixed(2)}`;
+                }
+                else if (currentPhase === 12) { // Q13 Fingerprints
+                    const mig = suspects.find(s => s.id === 'miguel');
+                    const pMig = mig.prob / 100;
+                    // Formula: P(Print|Mig)=0.85, P(Print|~Mig)=0.14
+                    const num = 0.85 * pMig;
+                    const den = num + (0.14 * (1 - pMig));
+                    target = num / den;
+                    calculationNote = `Solution: (0.85 * ${pMig.toFixed(2)}) / [(0.85 * ${pMig.toFixed(2)}) + (0.14 * ${(1 - pMig).toFixed(2)})] = ${target.toFixed(2)}`;
+                }
+                else if (qsId(qData) === 'q10') { // Footprints (Generic Solve)
+                    // Check against ALL suspects
+                    let matchedSuspect = null;
+
+                    suspects.forEach(s => {
+                        const prior = s.prob / 100;
+                        const num = 0.93 * prior;
+                        const den = num + (0.27 * (1 - prior));
+                        const t = num / den;
+                        if (val.toFixed(2) === t.toFixed(2)) {
+                            isCorrect = true;
+                            matchedSuspect = s;
+                        }
+                    });
+
+                    if (isCorrect) {
+                        selectedS = matchedSuspect.id; // For adjustment
+                    } else {
+                        // Default solution logic (show Miguel's Example)
+                        const s = suspects.find(x => x.id === 'miguel');
+                        const p = s.prob / 100;
+                        const n = 0.93 * p;
+                        const d = n + (0.27 * (1 - p));
+                        const ans = n / d;
+                        calculationNote = `Example Solution (Miguel): (0.93 * ${p.toFixed(2)}) / [(0.93 * ${p.toFixed(2)}) + (0.27 * ${(1 - p).toFixed(2)})] = ${ans.toFixed(2)}`;
+                    }
+                }
+                else {
+                    target = qData.answer;
+                    if (qData.showSolutionAfter) { // Only show for cards with this flag
+                        calculationNote = `Correct Answer: ${target}`;
+                    }
+                }
+
+                if (isNaN(val)) return;
+
+                // Strict Check: Compare toFixed(precision)
+                if (target !== null && val.toFixed(precision) === target.toFixed(precision)) {
+                    isCorrect = true;
+                }
+
+            } else if (qData.type === 'text_solve') {
+                val = card.querySelector('#text-input').value.trim().toUpperCase();
+                isCorrect = val === qData.answer;
+
+                // 3. DROPDOWN SOLVE
+            } else if (qData.type === 'dropdown_solve') {
+                selectedS = card.querySelector('#suspect-select').value;
+                val = parseFloat(card.querySelector('#num-input').value);
+                if (isNaN(val)) return;
+
+                if (qsId(qData) === 'q8') { // Kitchen Napkin (Q9 in text)
+                    if (selectedS === 'miguel') {
+                        target = 0.58 * 0.86; // 0.4988
+                        if (val.toFixed(2) === target.toFixed(2)) isCorrect = true;
+                        calculationNote = `Solution: 0.58 * 0.86 = 0.50 (approx)`;
+                    } else {
+                        // Distractor Check
+                        const d = distractors[selectedS] || [0.1, 0.1];
+                        target = d[0] * d[1];
+                        calculationNote = `Solution for ${selectedS}: ${d[0]} * ${d[1]} = ${(target).toFixed(2)}`;
+                    }
+
+                } else if (qsId(qData) === 'q10') {
+                    // Legacy block removed (handled in 'solve')
+                }
+            }
+
+            // FEEDBACK
+            feedbackEl.style.display = 'block';
+            if (feedbackEl.innerHTML === '') feedbackEl.innerHTML = '&nbsp;';
+
+            if (isCorrect) {
+                feedbackEl.className = 'feedback correct';
+
+                let niceMsg = qData.nice || "Correct Analysis.";
+                if (currentPhase === 11 || currentPhase === 12) {
+                    niceMsg = `Correct. The updated probability rises to ${target.toFixed(2)}.`;
+                }
+                feedbackEl.innerHTML = niceMsg;
+                btn.disabled = true;
+
+                // ADJUST PROBABILITIES (Narrative Control)
+                adjustProbabilities(currentPhase, true, selectedS);
+
+                // Phase 14: Resolution (Finding Killer)
+                if (currentPhase === 13) {
+
+                    const timeStr = document.getElementById('game-timer').innerText;
+                    const suspectListHTML = suspects.map(s => `
+                        <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-top:0.2rem; color:${s.color}">
+                            <span>${s.name}</span> <span>${s.prob.toFixed(1)}%</span>
+                        </div>
+                    `).join('');
+
+                    feedbackEl.innerHTML += `
+                        <br><br><strong>CASE SOLVED.</strong>
+                        <br>Time Taken: ${timeStr}
+                        <div style="background:rgba(0,0,0,0.3); padding:1rem; border-radius:4px; margin-top:1rem; margin-bottom: 1rem;">
+                            <strong>FINAL STATISTICS:</strong>
+                            ${suspectListHTML}
+                        </div>
+                        Updating Final Records...
+                    `;
+
+                    // Show Progress Bar
+                    const progressBar = document.createElement('div');
+                    progressBar.className = 'wait-progress';
+                    progressBar.style.display = 'block';
+                    progressBar.innerHTML = '<div class="wait-bar" id="p-bar"></div>';
+                    feedbackEl.appendChild(progressBar);
+
+                    setTimeout(() => { document.getElementById('p-bar').style.width = '100%'; }, 100);
+
+                    // Wait 5s then Load Phase 15 (Passphrase)
+                    setTimeout(() => {
+                        loadPhase(currentPhase + 1);
+                    }, 5000);
+
+                } else if (currentPhase === phases.length - 1) { // Phase 15 (End)
+                    stopTimer();
+                    const stage = document.getElementById('game-stage');
+                    const timeStr = document.getElementById('game-timer').innerText;
+
+                    feedbackEl.innerHTML = `
+                        <strong>ACCESS GRANTED.</strong><br>
+                        Dossier uploading to bold public servers...<br>
+                        Government corruption exposed.<br>
+                        <br>
+                        <strong>MISSION ACCOMPLISHED.</strong><br>
+                        Total Time: ${timeStr}
+                    `;
+                    setTimeout(() => showCaseClosed(true), 3000);
+
+                } else {
+                    setTimeout(() => loadPhase(currentPhase + 1), 2000);
+                }
+
+            } else {
+                qData.attempts++;
+                feedbackEl.className = 'feedback wrong';
+
+                // Specific Feedback
+                let msg = qData.bad || "Incorrect.";
+                if (qData.type === 'solve' && currentPhase === 6 && precision === 4) {
+                    msg += " (4 decimal places required)";
+                }
+
+                // Show Solution after N attempts (Configurable)
+                const threshold = qData.showSolutionAfter || 999;
+                if (qData.attempts >= threshold && calculationNote) {
+                    msg += `<br><br><span style="color:#fbbf24; font-family:var(--font-mono); font-size:0.85rem;">${calculationNote}</span>`;
+                }
+
+                if (selectedS && selectedS !== 'miguel' && (qsId(qData) === 'q8' || qsId(qData) === 'q10')) {
+                    msg = "Analysis valid, but this suspect does not align with core evidence. Try another lead.";
+                }
+
+                feedbackEl.innerHTML = msg;
+
+                // NO PROBABILITY ADJUSTMENT ON FAILURE
+
+                // Phase 15 Failure Logic
+                if (currentPhase === phases.length - 1) {
+                    p15Attempts++;
+                    feedbackEl.innerHTML += ` (Attempt ${p15Attempts}/3)`;
+                    if (p15Attempts >= 3) {
+                        btn.disabled = true;
+                        feedbackEl.innerHTML = "ACCESS LOCKED. INITIATING PROTOCOL ZERO.";
+                        stopTimer();
+                        setTimeout(() => animateDeletion(), 1000);
+                    }
+                }
+            }
+        }
+
+        function adjustProbabilities(phaseIdx, isCorrect, subBranch) {
+            // Weights (Approximate Prob Shifts)
+            const LOW = 4;
+            const MED = 8;
+            const HIGH = 15;
+            const SUPER = 25;
+
+            // Mapping Phase Index to Logic per probs_adjust.md
+            if (phaseIdx < 5) return; // Q1-Q5 Ignored (NH)
+
+            if (isCorrect) {
+                switch (phaseIdx) {
+                    case 5: // Q6 (Ramon, Diego, Teresa) (MH)
+                        applyAdjustment(['ramon', 'diego'], 2, 'boost');
+                        applyAdjustment(['teresa'], 5, 'boost');
+                        break;
+                    case 6: // Q7 (Miguel) (VH)
+                        applyAdjustment(['miguel'], HIGH, 'boost');
+                        break;
+                    case 7: // Q8 (Liza, Teresa) (MH)
+                        applyAdjustment(['liza', 'teresa'], MED, 'boost');
+                        applyAdjustment(['miguel'], 3, 'boost'); // Slight boost per spec
+                        break;
+                    case 8: // Q9 (Miguel) (VH)
+                        applyAdjustment(['miguel'], HIGH, 'boost');
+                        break;
+                    case 9: // Q10 (Branching)
+                        // If logic brings us here as 'correct', it means we are in a solved state.
+                        // However, Q10 has two branches.
+                        // If Miguel path (default correct flow):
+                        applyAdjustment(['miguel'], HIGH, 'boost');
+                        break;
+                    case 10: // Q11 (Blood/Miguel) (VH)
+                        applyAdjustment(['miguel'], HIGH, 'boost');
+                        break;
+                    case 11: // Q12 (Burned/Liza - Misdirection) (MH)
+                        applyAdjustment(['liza'], LOW, 'boost');
+                        applyAdjustment(['miguel'], 2, 'boost'); // "Tiny boost" per spec
+                        break;
+                    case 12: // Q13 (Fingerprints - LOCK IN) (VH)
+                        applyAdjustment(['miguel'], SUPER, 'boost');
+                        break;
+                }
+            } else {
+                // Penalties (Simple noise per spec)
+                if (phaseIdx === 5) applyAdjustment(['miguel'], LOW, 'reduce');
+                if ([6, 8, 9, 10, 12].includes(phaseIdx)) {
+                    applyAdjustment(['miguel'], MED, 'reduce');
+                }
+            }
+
+            normalizeSuspects();
+        }
+
+        function applyAdjustment(ids, amount, type) {
+            ids.forEach(id => {
+                const s = suspects.find(x => x.id === id);
+                if (s) {
+                    if (type === 'boost') s.prob += amount;
+                    if (type === 'reduce') s.prob -= amount;
+                }
+            });
+        }
+
+        function normalizeSuspects() {
+            // 1. Clamp negatives
+            suspects.forEach(s => { if (s.prob < 0) s.prob = 0; });
+
+            // 2. Sum
+            let total = suspects.reduce((sum, s) => sum + s.prob, 0);
+            if (total === 0) total = 1; // Avoid divide by zero
+
+            // 3. Normalize to 100
+            suspects.forEach(s => {
+                s.prob = (s.prob / total) * 100;
+            });
+
+            // 4. Miguel Cap Check (Max 94%)
+            const miguel = suspects.find(s => s.id === 'miguel');
+            if (miguel.prob > 94) {
+                const excess = miguel.prob - 94;
+                miguel.prob = 94;
+
+                // Distribute excess to others
+                const others = suspects.filter(s => s.id !== 'miguel');
+                const othersTotal = others.reduce((sum, s) => sum + s.prob, 0);
+
+                if (othersTotal > 0) {
+                    others.forEach(s => {
+                        s.prob += (s.prob / othersTotal) * excess;
+                    });
+                } else {
+                    others.forEach(s => s.prob += excess / others.length);
+                }
+            }
+
+            // 5. Final Safety: Re-normalize after cap adjustment
+            total = suspects.reduce((sum, s) => sum + s.prob, 0);
+            if (total === 0) total = 1;
+            suspects.forEach(s => {
+                s.prob = (s.prob / total) * 100;
+            });
+
+            updateSuspectDisplay();
+        }
+
+        function spawnGlitchBoxes() {
+            const box = document.createElement('div');
+            box.style.position = 'fixed';
+            box.style.left = Math.random() * 100 + 'vw';
+            box.style.top = Math.random() * 100 + 'vh';
+            box.style.width = Math.random() * 350 + 'px';
+            box.style.height = Math.random() * 80 + 'px';
+            box.style.background = Math.random() > 0.5 ? '#fff' : '#ef44ef';
+            box.style.zIndex = '9999';
+            box.style.mixBlendMode = 'difference';
+            box.style.pointerEvents = 'none';
+            document.body.appendChild(box);
+            setTimeout(() => box.remove(), 200 + Math.random() * 100);
+        }
+
+        function animateDeletion() {
+            const stage = document.getElementById('game-stage');
+            const sidebar = document.querySelector('aside');
+            const wrapper = document.getElementById('game-wrapper');
+            const cards = Array.from(document.querySelectorAll('.card'));
+
+            // Sync all backgrounds to black immediately but transition FAST
+            [wrapper, stage, sidebar].forEach(el => {
+                el.style.transition = "background-color 1s ease, background-image 1s ease, background 1s ease";
+                el.style.backgroundColor = "#000";
+                el.style.backgroundImage = "none";
+                el.style.background = "#000";
+            });
+
+            const targets = [...cards.reverse(), sidebar];
+
+            let delay = 0;
+            const scrollDelay = 275; // Time between each card's focus sequence
+
+            targets.forEach((el, index) => {
+                const isSidebar = (el === sidebar);
+
+                // 1. Advance Scroll
+                setTimeout(() => {
+                    if (!isSidebar) {
+                        el.scrollIntoView({ behavior: 'auto', block: 'center' }); // Changed to 'auto' for precision
+                    }
+                }, delay);
+
+                // 2. Glitch and Deletion Effect
+                setTimeout(() => {
+                    el.classList.add('glitching');
+
+                    // Spawn random boxes
+                    for (let i = 0; i < 10; i++) setTimeout(spawnGlitchBoxes, i * 50);
+
+                    setTimeout(() => {
+                        if (!isSidebar) {
+                            el.style.transition = "all 0.2s ease";
+                            el.style.opacity = '0';
+                            el.style.filter = "brightness(0) invert(1)";
+                            el.style.transform = 'skewX(50deg) scaleY(0.01)';
+                        } else {
+                            // Fade internal contents
+                            Array.from(el.children).forEach(child => {
+                                child.style.transition = "opacity 0.4s ease";
+                                child.style.opacity = '0';
+                            });
+                            el.style.borderRightColor = "transparent";
+                        }
+                    }, 150); // 300ms hold
+                }, delay + 100); // 200ms delay after scroll start
+
+                delay += scrollDelay;
+            });
+
+            // Phase 1.5: Hacking Background 
+            setTimeout(() => {
+                const hackingDiv = document.createElement('div');
+                hackingDiv.className = 'hacking-bg';
+                const binary = "C})f0DoS$i3rEnc4y673d&0d1C`b;?=(11|$F==[=1eFfd)>dd+01D00FE;F-000{0(,`!._<:d(0&>!+b^%+_){<^,(@0c)1+:D:>;A<1|0eFfd)>dd+01D00FE;F-000dxuhncq93r8u34878ycu3u76&t^*&(^*)(&$&2U UY&^*#&(HS&988909ugs%#^%(JbHJG^R^$6897)))";
+                hackingDiv.innerHTML = `<div class="hacking-content">${Array(300).fill(binary).join("<br>")}</div>`;
+                wrapper.appendChild(hackingDiv);
+                setTimeout(() => hackingDiv.style.opacity = '1', 100);
+            }, delay);
+
+            // Phase 2: System Zoom Out
+            setTimeout(() => {
+                document.body.style.backgroundColor = '#fff';
+                document.body.style.transition = "background-color 2s ease"; // Faster exit
+
+                wrapper.style.transition = "all 3s cubic-bezier(0.25, 1, 0.5, 1)";
+                wrapper.classList.add('laptop-mode');
+
+                startTerminalSequence(wrapper);
+            }, delay + 3000);
+        }
+
+        function startTerminalSequence(wrapper) {
+            const term = document.createElement('div');
+            term.className = 'terminal-overlay';
+            term.style.display = 'flex';
+            wrapper.appendChild(term);
+
+            // Random code scrolling
+            const codeLines = [
+                "ACCESSING MAINFRAME...",
+                "NEURAL NETWORK INFILTRATION...",
+                "DELETING SECTORS 7-9...",
+                "SECURING GOVERNMENT CORRUPTION...",
+                "OVERWRITING MBR...",
+                "X77_ERROR_LOG_NULL...",
+                "DARK WEB ACCESS GRANTED..."
+            ];
+
+            let lineDelay = 0;
+            codeLines.forEach(line => {
+                setTimeout(() => {
+                    const div = document.createElement('div');
+                    div.className = 'terminal-text';
+                    div.style.color = '#33ff33';
+                    div.style.fontSize = '0.8rem';
+                    div.style.opacity = '0.7';
+                    div.innerText = line;
+                    term.appendChild(div);
+                }, lineDelay);
+                lineDelay += 200;
+            });
+
+            // Main Messages
+            setTimeout(() => {
+                term.innerHTML = ''; // Clear code
+
+                const mainMsg = document.createElement('div');
+                mainMsg.style.fontSize = "2rem";
+                mainMsg.style.color = "red";
+                mainMsg.style.marginBottom = "1rem";
+                mainMsg.style.fontWeight = "bold";
+                term.appendChild(mainMsg);
+
+                // Animated Scramble
+                scrambleText(mainMsg, "PROTOCOL ZERO EXECUTED", () => {
+
+                    const subMsg1 = document.createElement('div');
+                    subMsg1.className = 'terminal-text';
+                    term.appendChild(subMsg1);
+
+                    setTimeout(() => {
+                        scrambleText(subMsg1, "SYSTEM WIPED. EVIDENCE DESTROYED.", () => {
+                            const subMsg2 = document.createElement('div');
+                            subMsg2.className = 'terminal-text';
+                            subMsg2.style.marginTop = "2rem";
+                            subMsg2.style.color = "white";
+                            term.appendChild(subMsg2);
+
+                            setTimeout(() => {
+                                scrambleText(subMsg2, "\"By deleting the truth, you have become part of the corruption.\"", () => null);
+                            }, 1000);
+                        });
+                    }, 1000);
+                });
+
+            }, lineDelay + 1000);
+        }
+
+        function scrambleText(element, finalText, callback) {
+            const chars = "!@#$%^&*()_+-=[]{}|;':\",./<>?";
+            let currentLetterIndex = 0;
+            let shuffleCount = 0;
+            const shufflesPerLetter = 2; // Faster
+
+            const interval = setInterval(() => {
+                let display = "";
+
+                for (let i = 0; i < finalText.length; i++) {
+                    if (i < currentLetterIndex) {
+                        display += finalText[i];
+                    } else if (i === currentLetterIndex) {
+                        display += chars[Math.floor(Math.random() * chars.length)];
+                    }
+                }
+
+                element.innerText = display;
+
+                shuffleCount++;
+                if (shuffleCount > shufflesPerLetter) {
+                    shuffleCount = 0;
+                    currentLetterIndex++;
+                }
+
+                if (currentLetterIndex > finalText.length) {
+                    clearInterval(interval);
+                    if (callback) callback();
+                }
+            }, 25); // Faster interval
+        }
+
+        function showCaseClosed(success) {
+            const stage = document.getElementById('game-stage');
+            const timeStr = document.getElementById('game-timer').innerText;
+
+            // Generate dynamic summary
+            let summaryHTML = suspects.map(s => `
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-family:var(--font-mono); color:${s.color}">
+                    <span>${s.name}</span> <span>${s.prob.toFixed(1)}%</span>
+                </div>
+            `).join('');
+
+            const finalCard = document.createElement('div');
+            finalCard.className = 'card story-card';
+            finalCard.style.borderColor = success ? 'var(--accent-green)' : 'var(--accent-red)';
+
+            finalCard.innerHTML = `
+                <div class="story-header">
+                    <div class="story-title" style="color:${success ? 'var(--accent-green)' : 'var(--accent-red)'}">
+                        ${success ? 'CASE CLOSED' : 'CASE FAILED'}
+                    </div>
+                </div>
+                <div class="story-content">
+                    <p style="margin-bottom:1rem; font-size:1.2rem; font-weight:bold;">
+                        ${success ? 'The Dossier has been released to the public.' : 'The truth remains buried.'}
+                    </p>
+                    <p style="margin-bottom:1rem;">Time to Solve: ${timeStr}</p>
+                    
+                    <div style="background:#0f172a; padding:1.5rem; border-radius:4px; margin-top:2rem;">
+                         <h4 style="color:#94a3b8; font-family:var(--font-mono); margin-bottom:1rem;">FINAL SUSPICION METRICS</h4>
+                         ${summaryHTML}
+                    </div>
+                </div>
+            `;
+            stage.appendChild(finalCard);
+            stage.scrollTop = stage.scrollHeight;
+        }
+
+        // --- HELPERS ---
+        function incrementSuspect(id, amount) {
+            const s = suspects.find(x => x.id === id);
+            if (s) s.prob = Math.min(100, s.prob + amount);
+            normalizeProbs();
+        }
+
+        function setSuspectProb(id, val) {
+            const s = suspects.find(x => x.id === id);
+            if (s) s.prob = val;
+            normalizeProbs();
+        }
+
+        function normalizeProbs() {
+            const total = suspects.reduce((sum, s) => sum + s.prob, 0);
+            if (total === 0) return;
+            suspects.forEach(s => {
+                s.prob = (s.prob / total) * 100;
+            });
+            updateSuspectDisplay();
+        }
+
+        // --- TIMER ---
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                const delta = Date.now() - startTime;
+                const d = new Date(delta);
+                const mm = String(d.getUTCMinutes()).padStart(2, '0');
+                const ss = String(d.getUTCSeconds()).padStart(2, '0');
+                const ms = String(Math.floor(d.getUTCMilliseconds() / 10)).padStart(2, '0');
+                document.getElementById('game-timer').innerText = `${mm}:${ss}:${ms}`;
+            }, 50);
+        }
+
+        function stopTimer() { clearInterval(timerInterval); }
+
+        // --- MODALS ---
+        function openSuspectModal(id) {
+            const s = suspects.find(x => x.id === id);
+            if (!s) return;
+            document.getElementById('detail-name').innerText = s.name;
+            document.getElementById('detail-name').style.color = s.color;
+            document.getElementById('detail-role').innerText = s.role;
+            document.getElementById('detail-desc').innerText = s.desc;
+            document.getElementById('detail-alibi').innerText = `"${s.alibi}"`;
+            document.getElementById('detail-motive').innerText = s.motive;
+            if (id === 'driver') {
+                document.getElementById('detail-alibi').innerText += ` Quote: ${s.quote}`;
+            }
+            document.getElementById('detail-modal').style.display = 'flex';
+        }
+
+        function openDriverModal() {
+            const s = driver;
+            document.getElementById('detail-name').innerText = s.name;
+            document.getElementById('detail-name').style.color = s.color;
+            document.getElementById('detail-role').innerText = s.role;
+            document.getElementById('detail-desc').innerText = s.desc;
+            document.getElementById('detail-alibi').innerText = `"${s.alibi}" Quote: ${s.quote}`;
+            document.getElementById('detail-motive').innerText = s.motive;
+            document.getElementById('detail-modal').style.display = 'flex';
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detail-modal').style.display = 'none';
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
