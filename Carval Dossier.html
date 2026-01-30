@@ -703,7 +703,107 @@
 
     </div><!-- End Game Wrapper -->
     <script>
-        // --- GAME DATA ---
+        // --- AUDIO MANAGER (Synthesized SFX) ---
+        class AudioManager {
+            constructor() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.value = 0.3; // Default volume
+                this.masterGain.connect(this.ctx.destination);
+                this.isMuted = false;
+            }
+
+            resume() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+            }
+
+            playTone(freq, type, duration, startTime = 0, vol = 1) {
+                if (this.isMuted) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime + startTime);
+
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime + startTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + startTime + duration);
+
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                osc.start(this.ctx.currentTime + startTime);
+                osc.stop(this.ctx.currentTime + startTime + duration);
+            }
+
+            playHover() {
+                this.playTone(800, 'sine', 0.05, 0, 0.1);
+            }
+
+            playClick() {
+                this.playTone(1200, 'square', 0.03, 0, 0.15);
+            }
+
+            playCorrect() {
+                this.playTone(523.25, 'sine', 0.3, 0, 0.4); // C5
+                this.playTone(659.25, 'sine', 0.3, 0.1, 0.4); // E5
+                this.playTone(783.99, 'sine', 0.6, 0.2, 0.4); // G5
+            }
+
+            playWrong() {
+                this.playTone(150, 'sawtooth', 0.4, 0, 0.5);
+                this.playTone(140, 'sawtooth', 0.4, 0.1, 0.5);
+            }
+
+            playWin() {
+                [0, 0.15, 0.3, 0.6].forEach((t, i) => {
+                    this.playTone(523.25 * (1 + i * 0.25), 'square', 0.8, t, 0.4);
+                });
+                this.playTone(1046.50, 'triangle', 2.0, 0.9, 0.6); // High C
+            }
+
+            playTicking() {
+                this.playTone(2000, 'square', 0.01, 0, 0.3);
+            }
+
+            playShutdown() {
+                if (this.isMuted) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(10, this.ctx.currentTime + 3);
+
+                gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 3);
+
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 3.1);
+            }
+
+            playTyping() {
+                const f = 200 + Math.random() * 600;
+                this.playTone(f, 'square', 0.03, 0, 0.1);
+            }
+        }
+
+        const audio = new AudioManager();
+
+        // Global Event Listeners for UI SFX
+        document.addEventListener('mouseover', (e) => {
+            if (e.target.matches('.btn, .mcq-option, .driver-btn, .close-modal, select')) {
+                audio.resume();
+                audio.playHover();
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('.btn, .mcq-option, .driver-btn, .close-modal, select')) {
+                audio.resume();
+                audio.playClick();
+            }
+            audio.resume();
+        });
+
         // --- GAME DATA ---
         const suspects = [
             {
@@ -711,35 +811,35 @@
                 desc: "By-the-book, anxious about exposure. Keeps a briefcase tight.",
                 alibi: "Retired early to room G2. Did not leave.",
                 motive: "Dossier contains memos linking him to bad contracts.",
-                img: 'Profile_Ramon Alvarado.jpeg'
+                img: 'https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/Profile_Ramon%20Alvarado.jpeg'
             },
             {
                 id: 'diego', name: 'Diego Santos', role: 'House Speaker', prob: 20, color: '#8b5cf6',
                 desc: "Commanding, ambitious. Quick to protect allies.",
                 alibi: "Walked alone 00:15–00:45 to clear head.",
                 motive: "Exposure threatens his political network/funding.",
-                img: 'Profile_Diego Santos.png'
+                img: 'https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/Profile_Diego%20Santos.png'
             },
             {
                 id: 'teresa', name: 'Teresa Valdez', role: 'Congresswoman', prob: 20, color: '#ef4444',
                 desc: "Calculated. Has quiet influence on allocations.",
                 alibi: "Stepped onto balcony at 00:50 for a call.",
                 motive: "District received questionable allocations.",
-                img: 'Profile_Teresa Valdez.jpeg'
+                img: 'https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/Profile_Teresa%20Valdez.jpeg'
             },
             {
                 id: 'liza', name: 'Liza Mendoza', role: 'Senator', prob: 20, color: '#10b981',
                 desc: "Procedural, influential in committees.",
                 alibi: "In library until 23:40, then room.",
                 motive: "Legislative actions allowed permit fast-tracking.",
-                img: 'Profile_Liza Mendoza.png'
+                img: 'https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/Profile_Liza%20Mendoza.png'
             },
             {
                 id: 'miguel', name: 'Miguel Reyes', role: 'Legal Counsel', prob: 20, color: '#3b82f6',
                 desc: "Smooth, legally savvy. excellent at reading leverage.",
                 alibi: "Clearing dishes until 01:00.",
                 motive: "Protecting clients tied to executive network.",
-                img: 'Profile_Miguel Reyes.png'
+                img: 'https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/Profile_Miguel%20Reyes.png'
             }
         ];
 
@@ -749,31 +849,31 @@
             alibi: "Slept in garage. Found body at 06:22.",
             motive: "None apparent.",
             quote: "She used to say... some people choose sense, others choose feeling. But the Dashwoods had both.",
-            img: 'Profile_Driver Jose Delos.jpeg'
+            img: 'https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/Profile_Driver%20Jose%20Delos.jpeg'
         };
         // Driver object merged into suspects, removed standalone const driver
 
         const phases = [
             {
-                story: { title: "Phase 1 — Prologue: Cassie Carval", img: "SP1 Prologue.png", text: "Cassie Carval was once the Undersecretary of the Department of Public Works and Highways (DPWH). Years inside the system gave her access to documents few ever saw—budget reallocations, padded contracts, and flood control projects whose costs ballooned while communities remained submerged. Before resigning, Cassie compiled a comprehensive dossier detailing these anomalies, implicating not just DPWH officials but also members of Congress, the Senate, and other government offices. She believed that transparency required courage—and preparation." },
+                story: { title: "Phase 1 — Prologue: Cassie Carval", img: "https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/SP1%20Prologue.png", text: "Cassie Carval was once the Undersecretary of the Department of Public Works and Highways (DPWH). Years inside the system gave her access to documents few ever saw—budget reallocations, padded contracts, and flood control projects whose costs ballooned while communities remained submerged. Before resigning, Cassie compiled a comprehensive dossier detailing these anomalies, implicating not just DPWH officials but also members of Congress, the Senate, and other government offices. She believed that transparency required courage—and preparation." },
                 q: { type: 'mcq', text: "Question 1: Which of the following pairs of events are mutually exclusive?", context: "Narrative context: The killer is one of the guests.", options: ["“The killer is a guest” and “The killer is a government official”", "“The killer entered through the front door” and “The killer entered through the back door”", "“The killer is Miguel Reyes” and “The killer is Senator Liza Mendoza”", "“The killer had motive” and “The killer had opportunity”"], correct: 2, nice: "Correct. A person cannot be both Miguel and Liza simultaneously.", bad: "Incorrect. Mutually exclusive means they cannot both be true." }
             },
             {
-                story: { title: "Phase 2 — The Invitation", img: "SP2 The Invitation.jpeg", text: "On December 19, 2025, Cassie invited five people she once trusted to her mountain house in Benguet. Each held power, each had something to lose if the dossier became public. Cassie told them she possessed a hard copy of the files, secured in a safe inside her study. She framed the meeting as a final conversation—an opportunity for honesty before she decided her next move." },
+                story: { title: "Phase 2 — The Invitation", img: "https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/SP2%20The%20Invitation.jpeg", text: "On December 19, 2025, Cassie invited five people she once trusted to her mountain house in Benguet. Each held power, each had something to lose if the dossier became public. Cassie told them she possessed a hard copy of the files, secured in a safe inside her study. She framed the meeting as a final conversation—an opportunity for honesty before she decided her next move." },
                 q: { type: 'mcq', text: "Question 2: Which pair of events can occur at the same time? (Mutually Inclusive)", context: "Detective reviews motives.", options: ["“The suspect works in DPWH” and “The suspect is implicated in flood-control anomalies”", "“The suspect was asleep” and “The suspect was seen on camera at 00:25”", "“The suspect destroyed evidence” and “The suspect is innocent of murder”", "“The suspect had no motive” and “The suspect stole the dossier”"], correct: 2, nice: "Correct. Destroying evidence (like pages) does not always mean murder.", bad: "Incorrect. Look for events that can happen together." }
             },
             {
                 story: {
                     title: "Phase 3 — The Night Before",
                     segments: [
-                        { img: "SP3.1 Night Before.jpeg", text: "The evening unfolded over dinner and drinks. Cassie openly discussed the corruption she uncovered, describing manipulated flood control budgets and falsified completion reports. Her guests listened carefully. Some questioned her conclusions. Others remained silent. Wine glasses clinked, but the atmosphere grew heavier as the night went on." },
-                        { img: "SP3.2 Night Before.jpeg", text: "As the gathering continued, smaller conversations formed. Two of the guests stepped aside, speaking in hushed tones about the consequences of exposure—political collapse, investigations, prison. Cassie remained in the background, holding the dossier, watching closely. Whatever trust once existed among them was visibly strained." }
+                        { img: "https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/SP3.1%20Night%20Before.jpeg", text: "The evening unfolded over dinner and drinks. Cassie openly discussed the corruption she uncovered, describing manipulated flood control budgets and falsified completion reports. Her guests listened carefully. Some questioned her conclusions. Others remained silent. Wine glasses clinked, but the atmosphere grew heavier as the night went on." },
+                        { img: "https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/SP3.2%20Night%20Before.jpeg", text: "As the gathering continued, smaller conversations formed. Two of the guests stepped aside, speaking in hushed tones about the consequences of exposure—political collapse, investigations, prison. Cassie remained in the background, holding the dossier, watching closely. Whatever trust once existed among them was visibly strained." }
                     ]
                 },
                 q: { type: 'mcq', text: "Question 3: Which statement best describes the camera glitch and the killer’s motive?", context: "Camera glitch: 00:20–00:23. Independence.", options: ["The glitch caused the motive", "The motive caused the glitch", "The glitch and motive are independent events", "The glitch proves intent to kill"], correct: 2, nice: "Correct. A technical failure and human motive are independent. There's no evidence of hacking, anyways.", bad: "Incorrect. One did not cause the other." }
             },
             {
-                story: { title: "Phase 4 — The Safe", img: "SP4 The Safe.png", text: "Later that night, Cassie retreated to her study. She placed the dossier inside her wall-mounted safe, entering a six-digit numerical code she had carefully chosen. The safe clicked shut. The hard copy was secure—for now. Cassie believed that even if one layer failed, others would hold." },
+                story: { title: "Phase 4 — The Safe", img: "https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/SP4%20The%20Safe.png", text: "Later that night, Cassie retreated to her study. She placed the dossier inside her wall-mounted safe, entering a six-digit numerical code she had carefully chosen. The safe clicked shut. The hard copy was secure—for now. Cassie believed that even if one layer failed, others would hold." },
                 q: { type: 'mcq', text: "Question 4: Which statement is most reasonable regarding Conditional Probability?", context: "The safe was opened without force.", options: ["If the safe was opened, then the killer must be Cassie", "If the killer knew the PIN, then the safe could be opened", "If the safe was opened, then everyone knew the PIN", "If the PIN was known, then murder was inevitable"], correct: 1, nice: "Correct. Knowing the PIN is a condition enabled opening.", bad: "Incorrect. Focus on necessity." }
             },
             {
@@ -782,19 +882,19 @@
                 q: { type: 'solve', text: "Question 5: Dynamic Placeholder", context: null, answer: 0.4, nice: "Correct.", bad: "Incorrect." }
             },
             {
-                story: { title: "Phase 6 — Initial Assessment", img: "SP6 Initial Assessment.png", text: "The scene showed no signs of forced entry. Furniture was undisturbed. A blood trail suggested Cassie had moved from another part of the house before collapsing in the hall. The house layout made it clear: anyone inside that night could have reached her. This was not seen in the camera though. Could it be the glitched part of the camera?" },
+                story: { title: "Phase 6 — Initial Assessment", img: "https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/SP6%20Initial%20Assessment.png", text: "The scene showed no signs of forced entry. Furniture was undisturbed. A blood trail suggested Cassie had moved from another part of the house before collapsing in the hall. The house layout made it clear: anyone inside that night could have reached her. This was not seen in the camera though. Could it be the glitched part of the camera?" },
                 q: { type: 'solve', text: "Question 6: What is the probability that a suspect is implicated OR present during the glitch?", context: "Three suspects are implicated in DPWH flood-control anomalies: Ramon, Diego, Teresa.<br>Two suspects were present during the camera glitch window: Liza, Teresa.", answer: 0.8, nice: "Correct. 0.6 + 0.4 - 0.2 = 0.8", bad: "Incorrect. Remember to subtract the intersection." }
             },
             {
-                story: { title: "Phase 7 — The Empty Safe", img: "SP7 Empty Safe.jpeg", text: "When investigators opened the safe in Cassie’s study, it was empty. The hard-copy dossier was gone. There were faint smudge marks on the keypad—too many to identify a single person, but enough to confirm the safe had been opened after Cassie secured it." },
+                story: { title: "Phase 7 — The Empty Safe", img: "https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/SP7%20Empty%20Safe.jpeg", text: "When investigators opened the safe in Cassie’s study, it was empty. The hard-copy dossier was gone. There were faint smudge marks on the keypad—too many to identify a single person, but enough to confirm the safe had been opened after Cassie secured it." },
                 q: { type: 'solve', text: "Question 7: What is the probability that Miguel could have taken the dossier, (meaning that he either knew the safe code OR gained access without knowing it) AND had uninterrupted access to the study?", context: "Investigators conclude that the killer must have either personally known the six-digit safe code OR gained access while Cassie was distracted—but to successfully remove the dossier unnoticed, the killer still needed uninterrupted access to the study. Investigators focus on Miguel Reyes, whose legal work often brought him into Cassie’s study that night.<br><br>P(Miguel knows the safe code) = 0.42<br>P(Miguel gains access to the study without knowing the code) = 0.23<br>P(Miguel has uninterrupted access to the study) = 0.59", answer: 0.3835, nice: "Correct. 0.65 * 0.59 = 0.3835", bad: "Incorrect. Multiply 0.65 * 0.59 and keep 4 decimals." }
             },
             {
-                story: { title: "Phase 8 — The Camera Gap", img: "SP8 The Camera Gap.jpeg", text: "Security footage from inside the house revealed a critical gap. Between 12:20 a.m. and 12:23 a.m., the cameras glitched. The blackout was brief—but long enough for someone to move unseen between rooms." },
+                story: { title: "Phase 8 — The Camera Gap", img: "https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/SP8%20The%20Camera%20Gap.jpeg", text: "Security footage from inside the house revealed a critical gap. Between 12:20 a.m. and 12:23 a.m., the cameras glitched. The blackout was brief—but long enough for someone to move unseen between rooms." },
                 q: { type: 'solve', text: "Question 8: What is the probability that the suspect was moving through the house during the blackout window?", context: "Given:<br>P(Camera blackout) = 0.3<br>P(Suspect moving during blackout | Camera blackout) = 0.7", answer: 0.21, nice: "Correct. 0.3 * 0.7 = 0.21. Suspicion rises.", bad: "Incorrect. Multiply probabilities." }
             },
             {
-                story: { title: "Phase 9 — The Kitchen", img: "SP9 The Kitchen.jpeg", text: "In the kitchen, investigators found a crumpled napkin with handwritten digits: “2 – 7 – 6.” Nearby, a knife block sat on the counter, missing one large kitchen knife. The rest of the kitchen appeared clean, almost deliberately so." },
+                story: { title: "Phase 9 — The Kitchen", img: "https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/SP9%20The%20Kitchen.jpeg", text: "In the kitchen, investigators found a crumpled napkin with handwritten digits: “2 – 7 – 6.” Nearby, a knife block sat on the counter, missing one large kitchen knife. The rest of the kitchen appeared clean, almost deliberately so." },
                 q: {
                     type: 'dropdown_solve',
                     text: "Question 9: Napkin found. Calculate Joint Probability P(Napkin AND Used Kitchen). Select Suspect.",
@@ -806,33 +906,33 @@
                 }
             },
             {
-                story: { title: "Phase 10 — Outside the House", img: "SP10 Outside House.png", text: "Behind the house, muddy footprints led from a back door toward the garden before disappearing. The ground suggested someone had stepped outside briefly and returned, possibly to discard or hide something. <br>  Investigators theorize that the killer wrapped the knife in a cloth before briefly stepping outside to discard or clean it. One suspect had mud on their shoes the next morning." },
+                story: { title: "Phase 10 — Outside the House", img: "https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/SP10%20Outside%20House.png", text: "Behind the house, muddy footprints led from a back door toward the garden before disappearing. The ground suggested someone had stepped outside briefly and returned, possibly to discard or hide something. <br>  Investigators theorize that the killer wrapped the knife in a cloth before briefly stepping outside to discard or clean it. One suspect had mud on their shoes the next morning." },
                 q: { type: 'branching', text: "Question 10: Choose an investigative path.", context: "Decide which lead to pursue.", answer: 0, nice: "", bad: "" }
             },
             {
                 story: {
                     title: "Phase 11 — Personal Items",
                     segments: [
-                        { img: "SP11.1 Personal Items.png", text: "In one guest’s room, a legal pad lay on a bedside table. Several numbers were written repeatedly, some lightly circled. It was unclear whether they were calculations, notes, or something else entirely." },
-                        { img: "SP11.2 Personal Items.png", text: "Under the same bed, investigators later discovered a napkin stained with blood, partially hidden from view. It matched the texture of the napkin found in the kitchen." }
+                        { img: "https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/SP11.1%20Personal%20Items.png", text: "In one guest’s room, a legal pad lay on a bedside table. Several numbers were written repeatedly, some lightly circled. It was unclear whether they were calculations, notes, or something else entirely." },
+                        { img: "https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/SP11.2%20Personal%20Items.png", text: "Under the same bed, investigators later discovered a napkin stained with blood, partially hidden from view. It matched the texture of the napkin found in the kitchen." }
                     ]
                 },
                 q: { type: 'solve', text: "Question 11: Blood under bed. Find Joint P(Killer AND Blood).", context: "Given:<br>P(Killer|Blood)=0.72<br>P(Blood)=0.24", answer: 0.1728, nice: "Correct. 0.1728.", bad: "Incorrect. Multiply." }
             },
             {
-                story: { title: "Phase 12 — Burned Pages", img: "SP12 Burned Pages.png", text: "In Senator Liza's trash bin, investigators found partially burned documents. Though damaged, fragments clearly showed flood control project titles, peso amounts, and ledger-style tables. It appeared to be part of Cassie’s dossier—but not all of it." },
+                story: { title: "Phase 12 — Burned Pages", img: "https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/SP12%20Burned%20Pages.png", text: "In Senator Liza's trash bin, investigators found partially burned documents. Though damaged, fragments clearly showed flood control project titles, peso amounts, and ledger-style tables. It appeared to be part of Cassie’s dossier—but not all of it." },
                 q: { type: 'solve', text: "Question 12: Update P(Liza Killer | Burned Pages).", context: "Given:<br>P(Burn | Liza)=0.61<br>P(Burn | ~Liza)=0.55.<br>Bayes: P(A|B) = P(B|A)P(A) / P(B)", answer: 0.23, nice: "Correct. 0.23.", bad: "Incorrect. Recalculate your formula.", set: 'liza', setVal: 23 }
             },
             {
-                story: { title: "Phase 13 — The Driver’s Words", img: "SP13 Drivers Words.png", text: "Jose Alba gave his statement calmly. He spoke about Cassie’s habits, her belief in responsibility and compassion, and her fondness for stories where reason and conscience must coexist. He mentioned that Cassie always believed in preparing for the worst while hoping for the best.<br><br>Meanwhile, the investigator has the results on the fingerprints on safe." },
+                story: { title: "Phase 13 — The Driver’s Words", img: "https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/SP13%20Drivers%20Words.png", text: "Jose Alba gave his statement calmly. He spoke about Cassie’s habits, her belief in responsibility and compassion, and her fondness for stories where reason and conscience must coexist. He mentioned that Cassie always believed in preparing for the worst while hoping for the best.<br><br>Meanwhile, the investigator has the results on the fingerprints on safe." },
                 q: { type: 'solve', text: "Question 13: Given the fingerprint evidence, what is the updated probability that Miguel is the killer?", context: "Given:<br>P(Print | Miguel)=0.85<br>P(Print | ~Miguel)=0.14", answer: 0.82, nice: "Correct. Near certainty at 0.82.", bad: "Incorrect.", set: 'miguel', setVal: 87 }
             },
             {
-                story: { title: "Phase 14 — Resolution", img: "SP15 Resolution.jpeg", text: "With the evidence laid out—the missing dossier, the burned fragments, the safe, the phone/pad evidence, and the shifting alibis—the case now rests in the detective’s hands. The truth is within reach. It is time to make an arrest." },
+                story: { title: "Phase 14 — Resolution", img: "https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/SP15%20Resolution.jpeg", text: "With the evidence laid out—the missing dossier, the burned fragments, the safe, the phone/pad evidence, and the shifting alibis—the case now rests in the detective’s hands. The truth is within reach. It is time to make an arrest." },
                 q: { type: 'mcq', text: "Final Decision: Who is the Killer?", context: "Select the suspect with the highest probability/evidence load.", options: ["Ramon Alvarado", "Diego Santos", "Teresa Valdez", "Liza Mendoza", "Miguel Reyes"], correct: 4, nice: "CORRECT. Miguel Reyes is the killer.", bad: "INCORRECT. Review the evidence." }
             },
             {
-                story: { title: "Phase 15 — The Second Phone", img: "SP14 Second Phone.jpeg", text: "Excellent work, Detective. You have the killer. But the hard copy dossier was destroyed or lost. However... a second phone belonging to Cassie was discovered hidden in her study. It displays a single message: “Speak the trusted phrase.” Failure to unlock this means the corruption remains hidden." },
+                story: { title: "Phase 15 — The Second Phone", img: "https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/SP14%20Second%20Phone.jpeg", text: "Excellent work, Detective. You have the killer. But the hard copy dossier was destroyed or lost. However... a second phone belonging to Cassie was discovered hidden in her study. It displays a single message: “Speak the trusted phrase.” Failure to unlock this means the corruption remains hidden." },
                 q: { type: 'text_solve', text: "Enter the Passphrase:", context: "Recall the Driver's statement in your case briefing. You have 3 attempts.", answer: "DASHWOOD", nice: "ACCESS GRANTED. DOSSIER UPLOADING...", bad: "ACCESS DENIED." }
             }
         ];
@@ -1368,6 +1468,7 @@
             if (feedbackEl.innerHTML === '') feedbackEl.innerHTML = '&nbsp;';
 
             if (isCorrect) {
+                audio.playCorrect();
                 feedbackEl.className = 'feedback correct';
 
                 let niceMsg = qData.nice || "Correct Analysis.";
@@ -1415,6 +1516,7 @@
                     }, 5000);
 
                 } else if (currentPhase === phases.length - 1) { // Phase 15 (End)
+                    audio.playWin();
                     stopTimer();
                     const stage = document.getElementById('game-stage');
                     const timeStr = document.getElementById('game-timer').innerText;
@@ -1434,6 +1536,7 @@
                 }
 
             } else {
+                audio.playWrong();
                 qData.attempts++;
                 feedbackEl.className = 'feedback wrong';
 
@@ -1593,6 +1696,7 @@
         }
 
         function animateDeletion() {
+            const ticker = setInterval(() => audio.playTicking(), 150);
             const stage = document.getElementById('game-stage');
             const sidebar = document.querySelector('aside');
             const wrapper = document.getElementById('game-wrapper');
@@ -1666,11 +1770,13 @@
                 wrapper.style.transition = "all 3s cubic-bezier(0.25, 1, 0.5, 1)";
                 wrapper.classList.add('laptop-mode');
 
+                clearInterval(ticker);
                 startTerminalSequence(wrapper);
-            }, delay + 3000);
+            }, delay + 3200);
         }
 
         function startTerminalSequence(wrapper) {
+            audio.playShutdown();
             const term = document.createElement('div');
             term.className = 'terminal-overlay';
             term.style.display = 'flex';
@@ -1744,6 +1850,7 @@
             const shufflesPerLetter = 2; // Faster
 
             const interval = setInterval(() => {
+                if (shuffleCount % 2 === 0) audio.playTyping();
                 let display = "";
 
                 for (let i = 0; i < finalText.length; i++) {
