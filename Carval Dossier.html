@@ -607,6 +607,72 @@
         .hacking-content {
             animation: scroll-hacking 10s linear infinite;
         }
+
+        .floating-controls-bottom {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 2000;
+        }
+
+        .floating-controls-top {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 30px;
+            padding: 5px;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+        }
+
+        .floating-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--bg-panel);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .floating-btn:hover {
+            color: var(--text-light);
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .volume-slider-container {
+            width: 0;
+            overflow: hidden;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .floating-controls-top:hover .volume-slider-container {
+            width: 100px;
+            margin-right: 10px;
+        }
+
+        input[type=range] {
+            width: 100%;
+            height: 4px;
+            accent-color: var(--accent-blue);
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -627,15 +693,6 @@
 
             <div class="suspect-container" id="suspects-list"></div>
 
-            <!-- Driver is now in the list, button removed -->
-
-            <!-- Sidebar Icons -->
-            <div style="display:flex; justify-content:center; gap:1.5rem; margin-bottom:1rem;">
-                <i data-lucide="info" style="color:#94a3b8; cursor:pointer;"
-                    onclick="document.getElementById('info-modal').style.display='flex'"></i>
-                <i data-lucide="book-open" style="color:#94a3b8; cursor:pointer;"
-                    onclick="document.getElementById('manual-modal').style.display='flex'"></i>
-            </div>
             <div class="timer-display" id="game-timer">00:00:00</div>
         </aside>
 
@@ -751,6 +808,25 @@
         </div>
 
     </div><!-- End Game Wrapper -->
+
+    <!-- Floating Controls -->
+    <div class="floating-controls-top">
+        <div class="volume-slider-container">
+            <input type="range" min="0" max="1" step="0.05" value="0.2" oninput="audio.setVolume(this.value)">
+        </div>
+        <div class="floating-btn" onclick="audio.toggleMute()">
+            <i data-lucide="volume-2" id="mute-icon"></i>
+        </div>
+    </div>
+
+    <div class="floating-controls-bottom">
+        <div class="floating-btn" onclick="document.getElementById('info-modal').style.display='flex'" title="Credits">
+            <i data-lucide="info"></i>
+        </div>
+        <div class="floating-btn" onclick="document.getElementById('manual-modal').style.display='flex'" title="Manual">
+            <i data-lucide="book-open"></i>
+        </div>
+    </div>
     <script>
         // --- AUDIO MANAGER (Synthesized SFX) ---
         class AudioManager {
@@ -759,21 +835,46 @@
                 this.masterGain = this.ctx.createGain();
                 this.masterGain.gain.value = 0.3; // Default volume
                 this.masterGain.connect(this.ctx.destination);
-                this.isMuted = false;
+                this.muted = false;
+                this.bgmVolume = 0.2; // Default starting volume
 
                 // Preload Audio Files
                 this.tickAudio = new Audio('https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/audio_ticks.mp3');
                 this.tickAudio.loop = true;
 
                 this.shutdownAudio = new Audio('https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/audio_shutdownHIGH.mp3');
+
+                // BGM System
+                this.bgm = new Audio();
+                this.bgm.volume = this.bgmVolume;
             }
 
             resume() {
                 if (this.ctx.state === 'suspended') this.ctx.resume();
             }
 
+            setVolume(val) {
+                this.bgmVolume = parseFloat(val);
+                if (!this.muted) this.bgm.volume = this.bgmVolume;
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                const icon = document.getElementById('mute-icon');
+                if (this.muted) {
+                    this.bgm.volume = 0;
+                    this.masterGain.gain.value = 0;
+                    if (icon) icon.setAttribute('data-lucide', 'volume-x');
+                } else {
+                    this.bgm.volume = this.bgmVolume;
+                    this.masterGain.gain.value = 0.3;
+                    if (icon) icon.setAttribute('data-lucide', 'volume-2');
+                }
+                lucide.createIcons();
+            }
+
             playTone(freq, type, duration, startTime = 0, vol = 1) {
-                if (this.isMuted) return;
+                if (this.muted) return;
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 osc.type = type;
@@ -788,14 +889,12 @@
                 osc.stop(this.ctx.currentTime + startTime + duration);
             }
 
-            playClick() {
-                this.playTone(1200, 'square', 0.03, 0, 0.15);
-            }
+            playClick() { }
 
             playCorrect() {
-                this.playTone(523.25, 'sine', 0.3, 0, 0.4); // C5
-                this.playTone(659.25, 'sine', 0.3, 0.1, 0.4); // E5
-                this.playTone(783.99, 'sine', 0.6, 0.2, 0.4); // G5
+                this.playTone(523.25, 'sine', 0.3, 0, 0.4);
+                this.playTone(659.25, 'sine', 0.3, 0.1, 0.4);
+                this.playTone(783.99, 'sine', 0.6, 0.2, 0.4);
             }
 
             playWrong() {
@@ -807,7 +906,7 @@
                 [0, 0.15, 0.3, 0.6].forEach((t, i) => {
                     this.playTone(523.25 * (1 + i * 0.25), 'square', 0.8, t, 0.4);
                 });
-                this.playTone(1046.50, 'triangle', 2.0, 0.9, 0.6); // High C
+                this.playTone(1046.50, 'triangle', 2.0, 0.9, 0.6);
             }
 
             playTyping() {
@@ -817,7 +916,7 @@
 
             startTicks() {
                 this.tickAudio.currentTime = 0;
-                this.tickAudio.play().catch(e => console.log("Audio play failed", e));
+                if (!this.muted) this.tickAudio.play().catch(e => { });
             }
 
             stopTicks() {
@@ -827,7 +926,49 @@
 
             playShutdownFile() {
                 this.shutdownAudio.currentTime = 0;
-                this.shutdownAudio.play().catch(e => console.log("Audio play failed", e));
+                if (!this.muted) this.shutdownAudio.play().catch(e => { });
+            }
+
+            playBGM(url, vol = 0.5, loop = true) {
+                this.bgmVolume = vol;
+                this.bgm.src = url;
+                this.bgm.loop = loop;
+                if (!this.muted) this.bgm.volume = vol;
+                this.bgm.play().catch(e => { });
+                this.bgm.onended = null;
+            }
+
+            fadeToNewBGM(url, targetVol = 0.5) {
+                const fadeDur = 2000;
+                const steps = 20;
+                const startVol = this.bgm.volume;
+                const fadeStep = startVol / steps;
+                let step = 0;
+
+                const fadeInt = setInterval(() => {
+                    step++;
+                    if (this.bgm.volume > fadeStep) this.bgm.volume -= fadeStep;
+
+                    if (step >= steps || this.bgm.volume <= 0.01) {
+                        clearInterval(fadeInt);
+                        this.playBGM(url, targetVol, true);
+                    }
+                }, fadeDur / steps);
+            }
+
+            stopBGM(duration = 500) {
+                const steps = 10;
+                const startVol = this.bgm.volume;
+                const fadeStep = startVol / steps;
+                let step = 0;
+                const fadeInt = setInterval(() => {
+                    step++;
+                    if (this.bgm.volume > fadeStep) this.bgm.volume -= fadeStep;
+                    if (step >= steps) {
+                        clearInterval(fadeInt);
+                        this.bgm.pause();
+                    }
+                }, duration / steps);
             }
         }
 
@@ -1113,6 +1254,7 @@
             // Clear Briefing
             document.getElementById('game-stage').innerHTML = '';
             loadPhase(0);
+            audio.playBGM('https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/BG1.mp3', 0.2);
         }
 
         function updateSuspectDisplay() {
@@ -1212,6 +1354,39 @@
             stage.appendChild(storyCard);
             lucide.createIcons();
             stage.scrollTop = stage.scrollHeight;
+
+            // AUTO-PROGRESS & AUDIO LOGIC
+            if (currentPhase === 12) { // Phase 13
+                audio.fadeToNewBGM('https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/DEM_01.mp3', 0.3);
+            }
+
+            if (currentPhase === 14) { // Phase 15
+                // Stop DEM_01 immediately before bar starts
+                audio.stopBGM(500);
+
+                const btn = storyCard.querySelector('.btn');
+                if (btn) btn.style.display = 'none';
+
+                const barContainer = document.createElement('div');
+                barContainer.innerHTML = `
+                    <div style="margin-top:2rem; font-family:var(--font-mono); font-size:0.9rem; color:var(--accent-red); text-align:center;">DECRYPTING SECURE FILE...</div>
+                    <div class="wait-progress" style="display:block; margin-top:0.5rem; background:#334155; height:4px; border-radius:2px; overflow:hidden;">
+                        <div class="wait-bar" style="height:100%; background:var(--accent-red); width:0%; transition:width 2s linear;"></div>
+                    </div>
+                 `;
+                storyCard.querySelector('.story-controls').appendChild(barContainer);
+
+                setTimeout(() => {
+                    const bar = barContainer.querySelector('.wait-bar');
+                    if (bar) bar.style.width = '100%';
+                }, 100);
+
+                setTimeout(() => {
+                    // Play Countdown immediately after bar (2s)
+                    audio.playBGM('https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/passphrase_countdown.mp3', 0.5, false);
+                    showQuestion(null);
+                }, 2100);
+            }
         }
 
         function showQuestion(btn, overrideData = null) {
@@ -1836,6 +2011,9 @@
                 setTimeout(() => hackingDiv.style.opacity = '1', 100);
             }, delay);
 
+            // Pre-trigger shutdown audio for better sync
+            setTimeout(() => audio.playShutdownFile(), delay + 2800);
+
             // Phase 2: System Zoom Out
             setTimeout(() => {
                 document.body.style.backgroundColor = '#fff';
@@ -1850,7 +2028,6 @@
         }
 
         function startTerminalSequence(wrapper) {
-            audio.playShutdownFile();
             const term = document.createElement('div');
             term.className = 'terminal-overlay';
             term.style.display = 'flex';
