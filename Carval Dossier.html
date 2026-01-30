@@ -629,6 +629,13 @@
 
             <!-- Driver is now in the list, button removed -->
 
+            <!-- Sidebar Icons -->
+            <div style="display:flex; justify-content:center; gap:1.5rem; margin-bottom:1rem;">
+                <i data-lucide="info" style="color:#94a3b8; cursor:pointer;"
+                    onclick="document.getElementById('info-modal').style.display='flex'"></i>
+                <i data-lucide="book-open" style="color:#94a3b8; cursor:pointer;"
+                    onclick="document.getElementById('manual-modal').style.display='flex'"></i>
+            </div>
             <div class="timer-display" id="game-timer">00:00:00</div>
         </aside>
 
@@ -701,6 +708,48 @@
             </div>
         </div>
 
+        <!-- INFO MODAL -->
+        <div class="modal-overlay" id="info-modal">
+            <div class="modal-content">
+                <button class="close-modal" onclick="document.getElementById('info-modal').style.display='none'"><i
+                        data-lucide="x"></i></button>
+                <div class="modal-header">
+                    <div class="modal-title-text">Credits</div>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Development:</strong> Justine Tolin</p>
+                    <p><strong>Story:</strong> Justine Tolin</p>
+                    <p><strong>Audio:</strong> Protocols</p>
+                    <p><em>Game created for the Carval Dossier project.</em></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- MANUAL MODAL -->
+        <div class="modal-overlay" id="manual-modal">
+            <div class="modal-content">
+                <button class="close-modal" onclick="document.getElementById('manual-modal').style.display='none'"><i
+                        data-lucide="x"></i></button>
+                <div class="modal-header">
+                    <div class="modal-title-text">Investigation Manual</div>
+                </div>
+                <div class="modal-body">
+                    <h3>Game Overview</h3>
+                    <p>Analyze evidence across 15 phases. Solve probability problems to catch the killer.</p>
+                    <br>
+                    <h3>Mechanics</h3>
+                    <ul>
+                        <li><strong>MCQ:</strong> Unlimited attempts.</li>
+                        <li><strong>Solving:</strong> 2 attempts per question. Wrong answers reduce accuracy.</li>
+                        <li><strong>Deadline:</strong> Identify the killer & enter passphrase in Phase 15.</li>
+                    </ul>
+                    <br>
+                    <h3>Passphrase</h3>
+                    <p>The second phone requires a passphrase. Recall the clues (Driver's words).</p>
+                </div>
+            </div>
+        </div>
+
     </div><!-- End Game Wrapper -->
     <script>
         // --- AUDIO MANAGER (Synthesized SFX) ---
@@ -711,6 +760,12 @@
                 this.masterGain.gain.value = 0.3; // Default volume
                 this.masterGain.connect(this.ctx.destination);
                 this.isMuted = false;
+
+                // Preload Audio Files
+                this.tickAudio = new Audio('https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/audio_ticks.mp3');
+                this.tickAudio.loop = true;
+
+                this.shutdownAudio = new Audio('https://raw.githubusercontent.com/justinetolin/CarvalDossier/refs/heads/main/audio_shutdownHIGH.mp3');
             }
 
             resume() {
@@ -731,10 +786,6 @@
                 gain.connect(this.masterGain);
                 osc.start(this.ctx.currentTime + startTime);
                 osc.stop(this.ctx.currentTime + startTime + duration);
-            }
-
-            playHover() {
-                this.playTone(800, 'sine', 0.05, 0, 0.1);
             }
 
             playClick() {
@@ -759,43 +810,32 @@
                 this.playTone(1046.50, 'triangle', 2.0, 0.9, 0.6); // High C
             }
 
-            playTicking() {
-                this.playTone(2000, 'square', 0.01, 0, 0.3);
-            }
-
-            playShutdown() {
-                if (this.isMuted) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(200, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(10, this.ctx.currentTime + 3);
-
-                gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 3);
-
-                osc.connect(gain);
-                gain.connect(this.masterGain);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 3.1);
-            }
-
             playTyping() {
                 const f = 200 + Math.random() * 600;
                 this.playTone(f, 'square', 0.03, 0, 0.1);
+            }
+
+            startTicks() {
+                this.tickAudio.currentTime = 0;
+                this.tickAudio.play().catch(e => console.log("Audio play failed", e));
+            }
+
+            stopTicks() {
+                this.tickAudio.pause();
+                this.tickAudio.currentTime = 0;
+            }
+
+            playShutdownFile() {
+                this.shutdownAudio.currentTime = 0;
+                this.shutdownAudio.play().catch(e => console.log("Audio play failed", e));
             }
         }
 
         const audio = new AudioManager();
 
-        // Global Event Listeners for UI SFX
-        document.addEventListener('mouseover', (e) => {
-            if (e.target.matches('.btn, .mcq-option, .driver-btn, .close-modal, select')) {
-                audio.resume();
-                audio.playHover();
-            }
-        });
+        let p15Timer = null; // Phase 15 Countdown Timer
 
+        // Global Event Listeners (Removed Hover)
         document.addEventListener('click', (e) => {
             if (e.target.matches('.btn, .mcq-option, .driver-btn, .close-modal, select')) {
                 audio.resume();
@@ -1186,6 +1226,13 @@
             const qCard = document.createElement('div');
             qCard.className = 'card question-card';
 
+            // Phase 15 Timer Logic
+            let timerHTML = '';
+            if (currentPhase === phases.length - 1 && (qData.text.includes("Passphrase") || qData.text.includes("Question 15"))) {
+                timerHTML = `<div id="p15-timer" class="timer-display" style="color:var(--accent-red); margin-bottom:1rem; border-color:var(--accent-red); background:rgba(239, 68, 68, 0.1); font-size:1.5rem;">03:00.00</div>`;
+                setTimeout(startP15Timer, 500);
+            }
+
             // Generate HTML based on type
             let inputHTML = '';
             let extraContextHTML = '';
@@ -1239,6 +1286,7 @@
                 <div class="question-text">${qData.text}</div>
                 ${contextText}
                 ${extraContextHTML}
+                ${timerHTML}
                 ${inputHTML}
                 ${qData.type !== 'branching' ? `<button class="btn" id="submit-btn" onclick="submitAnswer(this)">Submit Analysis</button>` : ''}
                 <div class="feedback"></div>
@@ -1411,6 +1459,7 @@
                     });
 
                     if (isCorrect) {
+                        if (p15Timer) { clearInterval(p15Timer); p15Timer = null; }
                         selectedS = matchedSuspect.id; // For adjustment
                     } else {
                         // Default solution logic (show Miguel's Example)
@@ -1468,6 +1517,7 @@
             if (feedbackEl.innerHTML === '') feedbackEl.innerHTML = '&nbsp;';
 
             if (isCorrect) {
+                if (p15Timer) { clearInterval(p15Timer); p15Timer = null; }
                 audio.playCorrect();
                 feedbackEl.className = 'feedback correct';
 
@@ -1585,6 +1635,7 @@
             if (phaseIdx < 5) return; // Q1-Q5 Ignored (NH)
 
             if (isCorrect) {
+                if (p15Timer) { clearInterval(p15Timer); p15Timer = null; }
                 switch (phaseIdx) {
                     case 5: // Q6 (Ramon, Diego, Teresa) (MH)
                         applyAdjustment(['ramon', 'diego'], 2, 'boost');
@@ -1695,8 +1746,31 @@
             setTimeout(() => box.remove(), 200 + Math.random() * 100);
         }
 
+        function startP15Timer() {
+            if (p15Timer) clearInterval(p15Timer);
+            let time = 3 * 60 * 1000; // 3 minutes
+            const display = document.getElementById('p15-timer');
+            if (!display) return;
+
+            p15Timer = setInterval(() => {
+                time -= 10;
+                if (time <= 0) {
+                    clearInterval(p15Timer);
+                    if (display) display.innerText = "00:00.00";
+                    animateDeletion();
+                    return;
+                }
+                const m = Math.floor(time / 60000);
+                const s = Math.floor((time % 60000) / 1000);
+                const ms = Math.floor((time % 1000) / 10);
+                if (display) display.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+            }, 10);
+        }
+
         function animateDeletion() {
-            const ticker = setInterval(() => audio.playTicking(), 150);
+            if (p15Timer) { clearInterval(p15Timer); p15Timer = null; }
+            audio.startTicks();
+            // const ticker = setInterval(() => audio.playTicking(), 150); // Legacy
             const stage = document.getElementById('game-stage');
             const sidebar = document.querySelector('aside');
             const wrapper = document.getElementById('game-wrapper');
@@ -1770,13 +1844,13 @@
                 wrapper.style.transition = "all 3s cubic-bezier(0.25, 1, 0.5, 1)";
                 wrapper.classList.add('laptop-mode');
 
-                clearInterval(ticker);
+                audio.stopTicks();
                 startTerminalSequence(wrapper);
             }, delay + 3200);
         }
 
         function startTerminalSequence(wrapper) {
-            audio.playShutdown();
+            audio.playShutdownFile();
             const term = document.createElement('div');
             term.className = 'terminal-overlay';
             term.style.display = 'flex';
